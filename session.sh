@@ -19,7 +19,13 @@ export PYTHONUTF8=1
 # 暴走時の上限。CI では特に効かせておきたい。
 MAX_TURNS="${MAX_TURNS:-40}"
 
-SESSION="${1:?使い方: ./session.sh {jp-open|jp-close|us-open|us-close|report}}"
+# ${1:?メッセージ} は使わないこと。メッセージ中に { } があると bash が最初の }
+# で展開を打ち切り、余った } が値に連結される（"us-open}" になって全部落ちた）。
+SESSION="${1-}"
+if [ -z "$SESSION" ]; then
+  echo "使い方: ./session.sh {jp-open|jp-close|us-open|us-close|report}" >&2
+  exit 1
+fi
 STAMP=$(TZ=Asia/Tokyo date +%Y-%m-%d_%H%M)
 mkdir -p logs reports
 

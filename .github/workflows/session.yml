@@ -91,16 +91,21 @@ jobs:
         if: always()
         run: python build_site.py
 
+      # セッションが途中で落ちても、それまでに成立した約定は state.json に
+      # 書かれている。コミットしないと次回チェックアウトで台帳が巻き戻り、
+      # クールダウンや約定数が現実とズレるので always() で必ず残す。
       - name: 記録をコミット
         if: always()
         run: |
           git config user.name "kabusim-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          MARK=""
+          if [ "${{ job.status }}" != "success" ]; then MARK=" [セッション失敗]"; fi
           git add -A
           if git diff --cached --quiet; then
             echo "変更なし。コミットしない。"
           else
-            git commit -m "${{ steps.sess.outputs.session }}: $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M') JST"
+            git commit -m "${{ steps.sess.outputs.session }}: $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M') JST${MARK}"
             git push
           fi
 
