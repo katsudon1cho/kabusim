@@ -274,9 +274,11 @@ main { padding-bottom: 2rem; }
   position: relative; height: 3px; margin: .45rem 0 0;
   background: var(--line-soft); border-radius: 2px; overflow: hidden;
 }
+/* 損益ではなく「1銘柄25%上限をどれだけ使ったか」を表すバーなので、
+   上げ下げの色は使わない。緑にすると隣の損益表示と色が矛盾する。 */
 .bar i {
   position: absolute; inset: 0 auto 0 0; border-radius: 2px;
-  background: linear-gradient(90deg, #00E5A088, var(--up));
+  background: linear-gradient(90deg, #46527033, var(--dim));
   animation: grow .9s .25s cubic-bezier(.2,.8,.3,1) backwards;
 }
 @keyframes grow { from { width: 0 !important; } }
