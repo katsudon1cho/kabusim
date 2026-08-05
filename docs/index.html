@@ -33,6 +33,7 @@
 <nav class="seg" role="tablist" aria-label="表示の切り替え">
   <span class="seg-glider" id="glider" aria-hidden="true"></span>
   <button role="tab" aria-selected="true"  aria-controls="view-overview" id="tab-overview">概要</button>
+  <button role="tab" aria-selected="false" aria-controls="view-holdings" id="tab-holdings">保有</button>
   <button role="tab" aria-selected="false" aria-controls="view-reports"  id="tab-reports">日報</button>
   <button role="tab" aria-selected="false" aria-controls="view-log"      id="tab-log">履歴</button>
 </nav>
@@ -41,6 +42,10 @@
 
   <section id="view-overview" role="tabpanel" aria-labelledby="tab-overview">
     <div id="books" class="stack"></div>
+  </section>
+
+  <section id="view-holdings" role="tabpanel" aria-labelledby="tab-holdings" hidden>
+    <div id="holdings"></div>
   </section>
 
   <section id="view-reports" role="tabpanel" aria-labelledby="tab-reports" hidden>
@@ -56,6 +61,11 @@
     </div>
     <p class="hint">却下された注文も残している。何をやろうとして止められたかが、この記録の一番の材料になる。</p>
     <ol class="feed" id="ledger"></ol>
+  </section>
+
+  <section id="view-detail" hidden>
+    <button class="back" id="back">← 保有一覧へ</button>
+    <div id="detail"></div>
   </section>
 
 </main>

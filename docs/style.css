@@ -111,7 +111,7 @@ header, nav, main, footer { position: relative; z-index: 1; max-width: var(--wra
 
 .seg {
   position: sticky; top: 0; z-index: 20;
-  display: grid; grid-template-columns: repeat(3, 1fr);
+  display: grid; grid-template-columns: repeat(4, 1fr);
   gap: .15rem; padding: .25rem;
   margin: 0 0 1.35rem;
   background: #0A0F1Ccc;
@@ -124,7 +124,7 @@ header, nav, main, footer { position: relative; z-index: 1; max-width: var(--wra
 .seg-glider {
   position: absolute; z-index: -1;
   top: .25rem; bottom: .25rem; left: .25rem;
-  width: calc((100% - .5rem - .3rem) / 3);
+  width: calc((100% - .5rem - .45rem) / 4);
   border-radius: 999px;
   background: var(--surface-2);
   border: 1px solid var(--line);
@@ -286,6 +286,62 @@ main { padding-bottom: 2rem; }
 .empty {
   padding: 1.1rem 0; color: var(--faint); font-size: .85rem;
 }
+
+/* ---------------- 保有一覧・個別銘柄 ---------------- */
+
+.pos.tapable {
+  cursor: pointer;
+  margin: 0 -.5rem; padding: .7rem .5rem;
+  border-radius: 10px;
+  transition: background .18s;
+}
+.pos.tapable:active { background: var(--surface-2); }
+.pos.tapable .pos-tk::after {
+  content: "›"; margin-left: .4rem; color: var(--faint); font-size: .9rem;
+}
+
+.back {
+  appearance: none; cursor: pointer;
+  background: none; border: 0; padding: .2rem 0 1rem;
+  color: var(--dim); font-family: var(--mono); font-size: .72rem;
+  letter-spacing: .04em;
+}
+
+.dhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.dtk {
+  margin: 0; font-family: var(--mono); font-size: 1.5rem;
+  font-weight: 650; letter-spacing: .01em;
+}
+.dbk { margin: .1rem 0 0; font-size: .72rem; color: var(--faint); }
+.dpx { text-align: right; }
+.num2 {
+  font-size: 1.5rem; font-weight: 650; letter-spacing: -.025em;
+  font-variant-numeric: tabular-nums; line-height: 1.2;
+}
+.dpx .pill { margin-top: .3rem; }
+
+.rangebar { display: flex; align-items: center; gap: .4rem; margin: 1.1rem 0 .2rem; }
+.rangebar button {
+  appearance: none; cursor: pointer;
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .04em;
+  padding: .35rem .7rem; border-radius: 9px;
+  color: var(--dim); background: var(--surface); border: 1px solid var(--line);
+  transition: .18s;
+}
+.rangebar button.on { color: var(--bg); background: var(--text); border-color: var(--text); font-weight: 700; }
+.rangebar .rchg {
+  margin-left: auto;
+  font-family: var(--mono); font-size: .78rem; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.reason {
+  background: var(--surface); border: 1px solid var(--line);
+  border-left: 2px solid var(--up); border-radius: 12px;
+  padding: .8rem .9rem;
+}
+.rwhen { margin: 0; font-family: var(--mono); font-size: .62rem; color: var(--faint); }
+.rwhy { margin: .4rem 0 0; font-size: .82rem; line-height: 1.75; color: #C3CDE3; }
 
 /* ---------------- 日報 ---------------- */
 

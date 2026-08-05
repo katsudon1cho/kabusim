@@ -12,3 +12,6 @@ __pycache__/
 .venv/
 .DS_Store
 Thumbs.db
+
+# 画面用データはデプロイ時に生成するので追跡しない
+docs/data/

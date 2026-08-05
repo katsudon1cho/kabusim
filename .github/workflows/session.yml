@@ -87,13 +87,10 @@ jobs:
           MAX_TURNS: "40"
         run: bash session.sh "${{ steps.sess.outputs.session }}"
 
-      - name: PWA 用のデータを生成
-        if: always()
-        run: python build_site.py
-
       # セッションが途中で落ちても、それまでに成立した約定は state.json に
       # 書かれている。コミットしないと次回チェックアウトで台帳が巻き戻り、
       # クールダウンや約定数が現実とズレるので always() で必ず残す。
+      # 画面用データ（docs/data/）はデプロイ時に作り直すのでコミットしない。
       - name: 記録をコミット
         if: always()
         run: |
@@ -114,3 +111,9 @@ jobs:
         run: |
           echo "--- 直近のログ ---"
           tail -n 60 "logs/${{ steps.sess.outputs.session }}.log" 2>/dev/null || echo "ログなし"
+
+  # セッションが失敗しても、その時点の台帳を画面に反映させたいので always()
+  deploy:
+    needs: session
+    if: always()
+    uses: ./.github/workflows/deploy-pages.yml
