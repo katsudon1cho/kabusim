@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>デザイン案 8〜12（設計原則ベース）— 仮想運用記録</title>
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#101014">
+<style>
+:root{
+  --g-bg:#101014;--g-card:#17171d;--g-line:#26262f;--g-tx:#e8e8ee;--g-dim:#8a8a99;--g-ac:#7ee0b8;
+  --g-sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic UI","Noto Sans JP",sans-serif;
+  --g-mono:ui-monospace,SFMono-Regular,"SF Mono","Cascadia Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:0 1rem 4rem;background:var(--g-bg);color:var(--g-tx);font-family:var(--g-sans);line-height:1.75}
+.wrap{max-width:78rem;margin-inline:auto}
+.intro{padding:2.5rem 0 1rem;max-width:44rem}
+.intro h1{margin:0 0 .6rem;font-size:1.55rem;letter-spacing:.02em}
+.intro p{margin:.6rem 0;color:var(--g-dim);font-size:.9rem}
+.intro a{color:var(--g-ac)}
+
+.find{background:var(--g-card);border:1px solid var(--g-line);border-radius:14px;padding:1.2rem 1.3rem;margin:1.5rem 0 2.5rem;max-width:44rem}
+.find h2{margin:0 0 .7rem;font-size:.95rem;letter-spacing:.04em}
+.find ol{margin:0;padding-left:1.2rem}
+.find li{margin:.5rem 0;font-size:.85rem;color:#c6c6d4}
+.find b{color:var(--g-tx)}
+.find .src{margin:.9rem 0 0;font-size:.72rem;color:var(--g-dim);line-height:1.8}
+.find .src a{color:var(--g-dim)}
+
+.gal{display:grid;gap:2.6rem;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));align-items:start}
+.demo{min-width:0}
+.demo-h{display:flex;align-items:baseline;gap:.6rem;margin-bottom:.15rem}
+.demo-n{font-family:var(--g-mono);font-size:.7rem;color:var(--g-dim);letter-spacing:.1em}
+.demo-h h2{margin:0;font-size:1.02rem}
+.demo>p{margin:.1rem 0 .5rem;font-size:.8rem;color:var(--g-dim);line-height:1.65}
+.why{margin:0 0 .9rem;font-size:.74rem;color:var(--g-ac);border-left:2px solid #7ee0b855;padding-left:.6rem;line-height:1.6}
+
+.frame{width:100%;max-width:375px;height:660px;overflow:hidden;border:9px solid #2a2a33;border-radius:34px;
+  box-shadow:0 18px 50px #0009,inset 0 0 0 1px #ffffff0d}
+.frame>.app{width:100%;height:100%;overflow-y:auto;scrollbar-width:none}
+.frame>.app::-webkit-scrollbar{display:none}
+.app{padding:1.1rem}
+svg{display:block;max-width:100%}
+path{fill:none;stroke-linejoin:round;stroke-linecap:round}
+
+/* ========== 案8 ベントーグリッド ========== */
+.m8{background:#0b0e13;color:#e6ebf2;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+.m8 .bt{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.m8 .b{background:#141922;border:1px solid #212936;border-radius:16px;padding:.85rem}
+.m8 .b.wide{grid-column:1/-1}
+.m8 .b.lift{background:#1a212c;border-color:#2b3546}
+.m8 .k{font-size:.55rem;letter-spacing:.14em;color:#77839a;text-transform:uppercase}
+.m8 .v{font-size:1.05rem;font-weight:700;font-variant-numeric:tabular-nums;margin-top:.15rem}
+.m8 .big{font-size:2.1rem;font-weight:750;letter-spacing:-.035em;margin:.2rem 0 0;font-variant-numeric:tabular-nums}
+.m8 .up{color:#4ade9b}.m8 .dn{color:#f6788c}
+.m8 .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem;font-size:.72rem;color:#77839a}
+.m8 .tk{font-weight:700;font-size:.82rem}
+.m8 .qt{font-size:.62rem;color:#77839a}
+.m8 svg path.a{stroke:#4ade9b;stroke-width:2}
+.m8 svg path.b{stroke:#4a5568;stroke-width:1.2;stroke-dasharray:3 3}
+
+/* ========== 案9 カーム（周辺視野） ========== */
+.m9{background:#12120f;color:#d8d6cc;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+.m9 .app{padding:2rem 1.4rem;display:flex;flex-direction:column;gap:2.4rem}
+.m9 .lead{font-size:.62rem;letter-spacing:.24em;color:#6f6c60;text-transform:uppercase}
+.m9 .gap{font-size:3.3rem;font-weight:300;letter-spacing:-.04em;line-height:1;margin:.5rem 0 .3rem;
+  font-variant-numeric:tabular-nums;color:#e8e5d8}
+.m9 .note{font-size:.8rem;color:#8f8b7d;line-height:1.8}
+.m9 .quiet{font-size:.78rem;color:#6f6c60;font-variant-numeric:tabular-nums}
+.m9 .rule{height:1px;background:#2a2820}
+.m9 .none{font-size:1.15rem;color:#c8c4b4;font-weight:400}
+.m9 .next{font-size:.72rem;color:#6f6c60;letter-spacing:.1em}
+.m9 svg path.a{stroke:#8f8b7d;stroke-width:1.3}
+.m9 svg path.b{stroke:#3a3830;stroke-width:1.1;stroke-dasharray:3 3}
+
+/* ========== 案10 Tufte / データインク ========== */
+.m10{background:#fdfdfb;color:#1a1a1a;font-family:ui-monospace,"SF Mono",Consolas,monospace}
+.m10 .app{padding:1rem .9rem}
+.m10 h3{margin:0 0 .1rem;font-size:.74rem;font-weight:700;letter-spacing:.02em}
+.m10 .sub{font-size:.6rem;color:#8a8a85;margin-bottom:.8rem}
+.m10 table{width:100%;border-collapse:collapse;font-size:.66rem;font-variant-numeric:tabular-nums}
+.m10 th{text-align:right;font-weight:400;color:#8a8a85;padding:.25rem .2rem;border-bottom:1px solid #1a1a1a}
+.m10 th:first-child,.m10 td:first-child{text-align:left}
+.m10 td{padding:.42rem .2rem;text-align:right;vertical-align:middle}
+.m10 tr+tr td{border-top:1px solid #ececE6}
+.m10 .dw{display:inline-block;vertical-align:-2px;margin-right:.3rem}
+.m10 .up{color:#0a6b3d}.m10 .dn{color:#9b1c2e}
+.m10 svg path.a{stroke:#1a1a1a;stroke-width:1}
+.m10 svg path.b{stroke:#b9b9b2;stroke-width:.9}
+.m10 .band{fill:#0000000d;stroke:none}
+.m10 .cap{font-size:.58rem;color:#8a8a85;margin:.35rem 0 1.1rem;line-height:1.6}
+
+/* ========== 案11 ベンチ相対（損失の再フレーミング） ========== */
+.m11{background:#0d1117;color:#dfe6ef;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+.m11 .lead{font-size:.6rem;letter-spacing:.2em;color:#7d8899;text-transform:uppercase}
+.m11 .rel{display:flex;align-items:baseline;gap:.45rem;margin:.35rem 0 .2rem}
+.m11 .rel .n{font-size:2.9rem;font-weight:700;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.m11 .rel .u{font-size:1rem;color:#7d8899}
+.m11 .win{color:#57cc99}.m11 .lose{color:#e08b9a}
+.m11 .frame-txt{font-size:.82rem;color:#a9b4c4;line-height:1.75;margin:.5rem 0 0}
+.m11 .card{border:1px solid #1e2733;border-radius:14px;padding:.9rem;margin-top:1rem;background:#111823}
+.m11 .two{display:flex;justify-content:space-between;font-size:.75rem;color:#7d8899;margin-top:.5rem}
+.m11 .two b{color:#dfe6ef;font-weight:650;font-variant-numeric:tabular-nums}
+.m11 svg path.a{stroke:#57cc99;stroke-width:2}
+.m11 svg path.b{stroke:#7d8899;stroke-width:1.2;stroke-dasharray:4 3}
+.m11 .fillwin{fill:#57cc9926;stroke:none}
+.m11 .sec{font-size:.55rem;letter-spacing:.16em;color:#5d6878;text-transform:uppercase;margin:1.3rem 0 .5rem}
+.m11 .pos{display:flex;justify-content:space-between;align-items:baseline;padding:.55rem 0;border-bottom:1px solid #1a222d;font-size:.8rem}
+.m11 .pos .m{font-variant-numeric:tabular-nums}
+.m11 .arw{font-size:.7rem}
+
+/* ========== 案12 ジャーナル優先 ========== */
+.m12{background:#16150f;color:#e6e2d4;font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif}
+.m12 .bar{display:flex;justify-content:space-between;font-size:.68rem;color:#8e8874;
+  font-family:ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums;
+  border-bottom:1px solid #33301f;padding-bottom:.5rem}
+.m12 .bar b{color:#d6d1bd;font-weight:400}
+.m12 .date{font-size:.62rem;letter-spacing:.2em;color:#8e8874;margin:1.4rem 0 .3rem;
+  font-family:ui-monospace,Consolas,monospace}
+.m12 .act{font-size:1.02rem;letter-spacing:.06em;margin:0 0 .5rem}
+.m12 .act .b{color:#c9a86a}
+.m12 .why{font-size:.84rem;line-height:1.95;color:#c8c2ae;margin:0;border:0;padding:0}
+.m12 .more{font-size:.68rem;color:#8e8874;margin-top:.5rem;font-family:ui-monospace,Consolas,monospace}
+.m12 hr{border:0;border-top:1px solid #2a2718;margin:1.3rem 0}
+.m12 .nums{display:flex;gap:1.2rem;font-family:ui-monospace,Consolas,monospace;font-size:.7rem;color:#8e8874;
+  font-variant-numeric:tabular-nums}
+.m12 .nums b{display:block;color:#e6e2d4;font-size:.95rem;font-weight:400;margin-top:.1rem}
+
+@media(max-width:700px){.gal{grid-template-columns:1fr}.frame{height:620px;margin-inline:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="intro">
+  <h1>デザイン案 8〜12</h1>
+  <p>今回は見た目の系統ではなく、<b>設計原則ごと</b>に5案。先に調べた知見を反映しています。</p>
+  <p><a href="mockups.html">← 案1〜7（見た目の系統ベース）はこちら</a></p>
+</div>
+
+<div class="find">
+  <h2>調べて分かったこと</h2>
+  <ol>
+    <li><b>損失を単独で見せない。</b>必ずベンチマークと並べる。ポートフォリオが8%下げても指数が12%下げていればそれは勝ちで、UIはそれを即座に伝えるべき。赤い数字だけを強調すると、下落時に衝動的な判断を誘発する</li>
+    <li><b>下落時は赤の視覚的な強さを落とす。</b>日々の損益を強調するダッシュボードは不安を増幅し、損失局面での投げ売りを促す</li>
+    <li><b>赤緑だけに頼らない。</b>矢印や記号を併用する。色覚特性のある人には赤緑の差が伝わらない</li>
+    <li><b>総資産はスクロールせずに見える位置に固定。</b>詳細は畳んでおき、必要なときだけ開く（progressive disclosure）</li>
+    <li><b>Tufte:</b> データを表さないインクを消す。装飾・影・重い罫線は「チャートジャンク」。sparkline は文中に埋め込めるほど小さくてよい。同じ形の小さな図を並べる（small multiples）と比較が一気に楽になる</li>
+    <li><b>カームテクノロジー:</b> 技術は最小限の注意で済むべきで、情報は視界の中心ではなく周辺で伝える</li>
+    <li><b>2026年の潮流:</b> ベントーグリッド（非対称のモジュール配置）、色を足さず「面の高さ」で階層を作るダークモード、控えめなガラス表現</li>
+  </ol>
+  <p class="src">出典:
+    <a href="https://lollypop.design/blog/2026/may/investment-dashboard-ux-design-guide/">Investment Dashboard UX Design (Lollypop)</a> ·
+    <a href="https://openwebsolutions.in/blog/behavioral-design-trading-apps-ux-patterns/">Behavioral Design in Trading Apps</a> ·
+    <a href="https://jtr13.github.io/cc19/tuftes-principles-of-data-ink.html">Tufte's Principles of Data-Ink</a> ·
+    <a href="https://www.caseorganic.com/post/principles-of-calm-technology">Principles of Calm Technology</a> ·
+    <a href="https://mediaplus.com.sg/ui-trends/">UI Trends 2026</a>
+  </p>
+  <p class="src"><b>この実験に固有の事情:</b> CLAUDE.md は「数日の値動きで一喜一憂しないこと」と明記し、
+    README は「価値があるのは成績表ではなく判断の記録」と書いています。普通の投資アプリは
+    <i>頻繁に開かせる</i>ことを目的に設計されますが、このプロジェクトの狙いはその逆です。
+    案9・案12 はそこに全振りした案です。</p>
+</div>
+
+<div class="gal" id="gal"></div>
+
+</div>
+
+<script>
+const MINE  = [46,44,48,40,43,36,38,30,33,26,28,20,24,16,18,12,14,8,10,5];
+const BENCH = [48,47,49,45,46,43,44,41,42,38,39,36,37,34,35,32,33,30,31,28];
+const X = i => i * 14;
+const P = a => a.map((y,i) => (i?"L":"M") + X(i) + " " + y).join(" ");
+const BAND = P(MINE) + " L" + X(19) + " " + BENCH[19] + " " +
+  BENCH.slice().reverse().map((y,i) => "L" + X(19-i) + " " + y).join(" ") + " Z";
+
+// small multiples 用に形を少し変えた系列を作る
+const jig = (seed) => MINE.map((y,i) => y + Math.sin((i+seed)*1.7)*4 + seed*1.5);
+
+const SPARK = (cls="") => `<svg viewBox="0 0 266 56" preserveAspectRatio="none" style="width:100%;height:52px" aria-hidden="true">
+  <path class="b" d="${P(BENCH)}"/><path class="a" d="${P(MINE)}"/></svg>`;
+const MICRO = (a) => `<svg class="dw" viewBox="0 0 266 56" preserveAspectRatio="none" width="52" height="14" aria-hidden="true">
+  <path class="a" d="${P(a)}"/></svg>`;
+
+const DESIGNS = [
+["ベントーグリッド",
+ "2026年の主流レイアウト。非対称のモジュールを敷き詰め、色を足さずに「面の高さ」だけで階層を作る。総資産・ベンチ差・現金・保有がスクロールせずに一望できる。",
+ "採用した原則: 総資産を最上部に固定 / ダークモードの surface elevation / 情報密度を上げつつ圧迫感を出さない",
+`<div class="hd"><span>仮想運用記録</span><span>08-06 09:15</span></div>
+ <div class="bt">
+   <div class="b wide lift"><div class="k">米国株ブック · 総資産</div>
+     <div class="big">$51,240</div>
+     <div class="v up" style="font-size:.85rem">↑ +2.48%　<span style="color:#77839a;font-weight:400">SPY +1.92%</span></div></div>
+   <div class="b"><div class="k">ベンチ差</div><div class="v up">↑ +0.56pt</div></div>
+   <div class="b"><div class="k">現金</div><div class="v">24.4%</div></div>
+   <div class="b wide">${SPARK()}</div>
+   <div class="b"><div class="tk">LLY</div><div class="qt">3株 · 7.0%</div><div class="v up" style="font-size:.8rem">↑ +0.3%</div></div>
+   <div class="b"><div class="tk">NVDA</div><div class="qt">12株 · 4.3%</div><div class="v dn" style="font-size:.8rem">↓ −1.2%</div></div>
+   <div class="b wide lift"><div class="k">日本株ブック</div>
+     <div class="big" style="font-size:1.6rem">¥20,310,000</div>
+     <div class="v up" style="font-size:.8rem">↑ +1.55%　<span style="color:#77839a;font-weight:400">1306.T +2.01% / <span class="dn">↓ −0.46pt</span></span></div></div>
+ </div>`],
+
+["カーム（周辺視野）",
+ "日々の損益をあえて小さくし、大きく出すのは「ベンチとの差」と「今日は何もしなかった」という事実だけ。開いても情報が押し寄せてこない。CLAUDE.md の「一喜一憂するな」を画面側で強制する案。",
+ "採用した原則: 最小限の注意で済ませる / 損失を単独で見せない / 何もしないことを肯定的に扱う",
+`<div>
+   <div class="lead">SPY との差</div>
+   <div class="gap">+0.56<span style="font-size:1.2rem;color:#6f6c60">pt</span></div>
+   <div class="note">市場は +1.92%。あなたは +2.48%。<br>差はまだ誤差の範囲。</div>
+ </div>
+ <div class="rule"></div>
+ <div>
+   <div class="lead">本日の売買</div>
+   <div class="none" style="margin-top:.4rem">なし</div>
+   <div class="note" style="margin-top:.3rem">前提は崩れていないと判断。<br>調べたうえで動かなかった。</div>
+ </div>
+ <div>${SPARK()}<div class="quiet" style="margin-top:.3rem">22営業日</div></div>
+ <div class="rule"></div>
+ <div>
+   <div class="lead">残高</div>
+   <div class="quiet" style="margin-top:.35rem">米国株 $51,240 ／ 現金 24.4%<br>日本株 ¥20,310,000 ／ 現金 23.7%</div>
+ </div>
+ <div class="next">次のセッション 14:45 · jp-close</div>`],
+
+["Tufte / データインク最大化",
+ "装飾・影・グラデーションを全廃し、インクのほぼ全部をデータに使う。保有銘柄は同一スケールの極小チャート（small multiples）で並べ、比較を一目で成立させる。文中に埋め込む sparkline も使う。",
+ "採用した原則: データを表さないインクを消す / small multiples で比較させる / チャートジャンクを作らない",
+`<h3>米国株ブック</h3>
+ <div class="sub">$51,240 · +2.48% · SPY +1.92% · 差 +0.56pt</div>
+ <svg viewBox="0 0 266 56" preserveAspectRatio="none" style="width:100%;height:58px">
+   <path class="band" d="${BAND}"/><path class="b" d="${P(BENCH)}"/><path class="a" d="${P(MINE)}"/></svg>
+ <div class="cap">細線=SPY、太線=自分。塗りは差。22営業日。</div>
+ <table>
+   <tr><th>銘柄</th><th>推移</th><th>評価額</th><th>損益</th><th>比率</th></tr>
+   <tr><td>LLY</td><td>${MICRO(jig(0))}</td><td>3,494</td><td class="up">+0.3</td><td>7.0</td></tr>
+   <tr><td>NVDA</td><td>${MICRO(jig(2))}</td><td>2,180</td><td class="dn">−1.2</td><td>4.3</td></tr>
+   <tr><td>現金</td><td></td><td>12,480</td><td></td><td>24.4</td></tr>
+ </table>
+ <h3 style="margin-top:1.3rem">日本株ブック</h3>
+ <div class="sub">¥20,310,000 · +1.55% · 1306.T +2.01% · 差 −0.46pt</div>
+ <svg viewBox="0 0 266 56" preserveAspectRatio="none" style="width:100%;height:58px">
+   <path class="b" d="${P(BENCH)}"/><path class="a" d="${P(jig(1))}"/></svg>
+ <div class="cap">22営業日。</div>
+ <table>
+   <tr><th>銘柄</th><th>推移</th><th>評価額</th><th>損益</th><th>比率</th></tr>
+   <tr><td>7203.T</td><td>${MICRO(jig(3))}</td><td>875,550</td><td class="up">+2.1</td><td>4.3</td></tr>
+   <tr><td>4568.T</td><td>${MICRO(jig(4))}</td><td>500,000</td><td class="dn">−0.8</td><td>2.5</td></tr>
+ </table>`],
+
+["ベンチ相対（損失の再フレーミング）",
+ "主役の数字を資産額ではなく「ベンチとの差」にする。勝っている期間は面が緑、負けている期間は面が赤に塗られ、自分と市場のどちらが原因かが常に見える。下落時も赤を強く出さない。",
+ "採用した原則: 損失を単独で見せない / 下落時に赤を弱める / 矢印を併用して色に依存しない",
+`<div class="lead">SPY に対して</div>
+ <div class="rel"><span class="n win">↑ +0.56</span><span class="u">pt</span></div>
+ <p class="frame-txt">市場は <b>+1.92%</b>、あなたは <b>+2.48%</b>。<br>
+   上げ相場で、やや上回っている。</p>
+ <div class="card">
+   <svg viewBox="0 0 266 56" preserveAspectRatio="none" style="width:100%;height:70px">
+     <path class="fillwin" d="${BAND}"/><path class="b" d="${P(BENCH)}"/><path class="a" d="${P(MINE)}"/></svg>
+   <div class="two"><span>塗り = 差</span><span>22営業日</span></div>
+ </div>
+ <div class="card">
+   <div class="two" style="margin:0"><span>総資産</span><b>$51,240</b></div>
+   <div class="two"><span>現金</span><b>24.4%</b></div>
+   <div class="two"><span>本日の買い枠</span><b>1 / 4</b></div>
+ </div>
+ <div class="sec">保有</div>
+ <div class="pos"><span>LLY <span style="color:#7d8899;font-size:.7rem">3株 · 7.0%</span></span>
+   <span class="m"><span class="arw win">↑</span> <span class="win">+0.3%</span></span></div>
+ <div class="pos"><span>NVDA <span style="color:#7d8899;font-size:.7rem">12株 · 4.3%</span></span>
+   <span class="m"><span class="arw lose">↓</span> <span class="lose">−1.2%</span></span></div>
+ <div class="sec" style="margin-top:1.4rem">日本株 · 1306.T に対して</div>
+ <div class="rel" style="margin-top:0"><span class="n lose" style="font-size:2rem">↓ −0.46</span><span class="u">pt</span></div>
+ <p class="frame-txt">市場は +2.01%、あなたは +1.55%。<br>上げ相場だが、やや置いていかれている。</p>`],
+
+["ジャーナル優先（記録が主役）",
+ "このプロジェクトの価値は判断の記録である、という前提に全振りした案。開くとまず最新の「なぜそう判断したか」が出る。数字は上部に1行だけ、控えめに置く。",
+ "採用した原則: 記録を第一階層に置く / 数字は progressive disclosure で畳む / 読み物としての組版",
+`<div class="bar"><span>米国株 <b>$51,240</b> <span style="color:#7ec9a0">+2.48%</span></span>
+   <span>日本株 <b>¥20.31M</b> <span style="color:#7ec9a0">+1.55%</span></span></div>
+ <div class="date">2026-08-06 01:13 · US-OPEN</div>
+ <p class="act"><span class="b">買い</span>　LLY 3株 @$1,163.89</p>
+ <p class="why">Q2売上+48%（23.0B、予想20.7B）。GLP-1牽引で通期ガイダンスを82-85B→85-87Bに上方修正したが、
+   株価反応は+4%程度と控えめ。上方修正の規模に対し織り込み不足と判断した。<br><br>
+   <span style="color:#8e8874">間違いと認める条件 —</span> 次回決算で Mounjaro / Zepbound の成長が明確に鈍化、
+   通期ガイダンス据え置きか下方修正、または薬価規制の悪材料。<br>
+   <span style="color:#8e8874">想定保有期間 —</span> 次回本決算（11月頃）まで。</p>
+ <div class="more">▸ 数字を見る</div>
+ <hr>
+ <div class="date">2026-08-05 14:45 · JP-CLOSE</div>
+ <p class="act">売買なし</p>
+ <p class="why">前場の下げは指数連動で、個別の材料ではないと判断。保有の前提は崩れていない。
+   調べたうえで動かなかった。</p>
+ <hr>
+ <div class="date">2026-08-05 09:15 · JP-OPEN</div>
+ <p class="act"><span style="color:#a08a5a">却下</span>　6861.T 100株</p>
+ <p class="why">1銘柄上限25%を超えるため約定せず。単元100株で1株8万円台のため、
+   この元本では構造的に買えない。</p>
+ <hr>
+ <div class="nums">
+   <span>買い枠<b>1 / 4</b></span><span>現金<b>24.4%</b></span><span>ベンチ差<b>+0.56pt</b></span>
+ </div>`],
+];
+
+document.getElementById("gal").innerHTML = DESIGNS.map((d,i) => `
+  <section class="demo">
+    <div class="demo-h"><span class="demo-n">案${i+8}</span><h2>${d[0]}</h2></div>
+    <p>${d[1]}</p>
+    <p class="why">${d[2]}</p>
+    <div class="frame m${i+8}"><div class="app">${d[3]}</div></div>
+  </section>`).join("");
+</script>
+</body>
+</html>
