@@ -1,0 +1,14 @@
+# セッションの生ログ。量が増えるうえ判断の記録は journal.jsonl と reports/ に残るので追跡しない
+logs/
+
+# 生成物のうち、state.json / journal.jsonl / equity_log.csv / reports/ は
+# この実験の記録そのものなので、意図的にコミットする（無視しない）
+
+# ローカル専用の設定（プレビュー用サーバー定義など）
+.claude/
+
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+Thumbs.db

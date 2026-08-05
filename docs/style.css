@@ -1,0 +1,413 @@
+/* 仮想運用記録 — 紙と墨の実験ノート
+   見出しは明朝、数字は等幅。朱は上げ、藍は下げ（日本式）。
+   外部リソースは一切読まない。フォントは端末にあるものだけで組む。 */
+
+:root {
+  --paper:      #f4f1e8;
+  --paper-2:    #eae5d8;
+  --paper-3:    #e0dacb;
+  --ink:        #1b1915;
+  --ink-mute:   #5d564a;
+  --rule:       #cbc3b1;
+  --rule-soft:  #ddd6c5;
+  --shu:        #b23c26;   /* 朱 = プラス */
+  --ai:         #2d4a74;   /* 藍 = マイナス */
+  --shu-bg:     #b23c2614;
+  --ai-bg:      #2d4a7414;
+
+  --serif: "Hiragino Mincho ProN", "Yu Mincho", YuMincho, "Noto Serif JP",
+           "Noto Serif CJK JP", "Songti SC", "MS PMincho", serif;
+  --sans:  "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", YuGothic,
+           "Noto Sans JP", "Noto Sans CJK JP", "Meiryo", sans-serif;
+  --mono:  ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+           "DejaVu Sans Mono", monospace;
+
+  --wrap: 42rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper:     #131210;
+    --paper-2:   #1c1a16;
+    --paper-3:   #24211c;
+    --ink:       #e9e4d7;
+    --ink-mute:  #948c7e;
+    --rule:      #38332b;
+    --rule-soft: #2a2621;
+    --shu:       #df6d54;
+    --ai:        #7ea1d0;
+    --shu-bg:    #df6d541a;
+    --ai-bg:     #7ea1d01a;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  padding: 0 1.15rem env(safe-area-inset-bottom) 1.15rem;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.75;
+  letter-spacing: .01em;
+  overflow-x: hidden;
+}
+
+/* 紙の粒子。派手にせず、平面に厚みだけ足す */
+.grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99;
+  opacity: .32;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+@media (prefers-color-scheme: dark) {
+  .grain { mix-blend-mode: screen; opacity: .12; }
+}
+
+main, header, footer, nav { max-width: var(--wrap); margin-inline: auto; }
+
+/* ---------- 題字 ---------- */
+
+.masthead { padding-top: 2.2rem; }
+
+.masthead-top { display: flex; align-items: flex-start; gap: .85rem; }
+
+.seal {
+  flex: none;
+  width: 2.5rem; height: 2.5rem;
+  display: grid; place-items: center;
+  background: var(--shu);
+  color: var(--paper);
+  font-family: var(--serif);
+  font-size: 1.35rem;
+  border-radius: 2px;
+  transform: rotate(-1.5deg);
+  box-shadow: 0 1px 0 #0000001f;
+}
+@media (prefers-color-scheme: dark) { .seal { color: #14120f; } }
+
+.masthead-title h1 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1.7rem;
+  font-weight: 600;
+  letter-spacing: .16em;
+  line-height: 1.25;
+}
+
+.subtitle {
+  margin: .1rem 0 0;
+  font-family: var(--mono);
+  font-size: .6rem;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+.colophon {
+  margin: .9rem 0 .5rem;
+  font-family: var(--mono);
+  font-size: .68rem;
+  letter-spacing: .06em;
+  color: var(--ink-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+.rule        { height: 1px; background: var(--rule); }
+.rule-double { height: 3px; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+
+/* ---------- タブ ---------- */
+
+.tabs {
+  display: flex;
+  gap: 1.6rem;
+  padding: .9rem 0 0;
+  position: sticky; top: 0; z-index: 10;
+  background: linear-gradient(var(--paper) 78%, transparent);
+}
+
+.tabs button {
+  appearance: none;
+  border: 0; background: none;
+  padding: 0 0 .55rem;
+  font-family: var(--serif);
+  font-size: 1rem;
+  letter-spacing: .18em;
+  color: var(--ink-mute);
+  cursor: pointer;
+  position: relative;
+  transition: color .25s;
+}
+.tabs button::after {
+  content: ""; position: absolute; left: 0; right: .18em; bottom: 0;
+  height: 2px; background: var(--shu);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform .28s cubic-bezier(.2,.7,.3,1);
+}
+.tabs button[aria-selected="true"] { color: var(--ink); }
+.tabs button[aria-selected="true"]::after { transform: scaleX(1); }
+
+main { padding: 1.6rem 0 3rem; }
+
+/* ---------- 台帳カード ---------- */
+
+.book {
+  margin-bottom: 2.6rem;
+  animation: rise .55s cubic-bezier(.2,.7,.3,1) backwards;
+}
+.book:nth-child(2) { animation-delay: .09s; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+}
+
+.book-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: .6rem; padding-bottom: .5rem;
+  border-bottom: 1px solid var(--rule);
+}
+.book-head h2 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1.15rem; font-weight: 600; letter-spacing: .14em;
+}
+.book-head .ccy {
+  font-family: var(--mono); font-size: .62rem;
+  letter-spacing: .2em; color: var(--ink-mute);
+}
+
+.equity {
+  display: flex; align-items: baseline; gap: .5rem;
+  margin: 1.1rem 0 .1rem;
+}
+.equity .amount {
+  font-family: var(--mono);
+  font-size: 2.05rem; font-weight: 500;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+.equity .delta { font-family: var(--mono); font-size: .95rem; font-variant-numeric: tabular-nums; }
+
+.pos { color: var(--shu); }
+.neg { color: var(--ai); }
+.flat { color: var(--ink-mute); }
+
+/* ベンチ比較 */
+.versus {
+  display: grid; grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--rule-soft);
+  margin-top: 1rem;
+}
+.versus div { padding: .6rem .75rem; }
+.versus div + div { border-left: 1px solid var(--rule-soft); }
+.versus dt {
+  font-family: var(--mono); font-size: .6rem;
+  letter-spacing: .16em; color: var(--ink-mute);
+  text-transform: uppercase; margin: 0;
+}
+.versus dd {
+  margin: .2rem 0 0;
+  font-family: var(--mono); font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 図 ---------- */
+
+figure { margin: 1.4rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+.spark-line { fill: none; stroke-width: 1.75; stroke-linejoin: round; stroke-linecap: round; }
+.spark-line.mine  { stroke: var(--shu); }
+.spark-line.bench { stroke: var(--ink-mute); stroke-dasharray: 3 3; stroke-width: 1.15; }
+.spark-zero { stroke: var(--rule); stroke-width: 1; }
+.spark-frame { stroke: var(--rule-soft); stroke-width: 1; fill: none; }
+.spark-label {
+  font-family: var(--mono); font-size: 7px;
+  fill: var(--ink-mute); letter-spacing: .06em;
+}
+
+.draw { stroke-dasharray: var(--len); stroke-dashoffset: var(--len); animation: draw 1.1s .15s cubic-bezier(.35,.6,.25,1) forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+
+figcaption {
+  display: flex; justify-content: space-between; gap: 1rem;
+  margin-top: .45rem;
+  font-family: var(--mono); font-size: .62rem;
+  letter-spacing: .08em; color: var(--ink-mute);
+}
+.legend { display: flex; gap: .9rem; }
+.legend span::before {
+  content: ""; display: inline-block; width: 12px; height: 2px;
+  margin-right: .35rem; vertical-align: .18em;
+}
+.legend .k-mine::before  { background: var(--shu); }
+.legend .k-bench::before { background: var(--ink-mute); height: 1px; }
+
+/* ---------- 現金・枠 ---------- */
+
+.meters {
+  display: flex; gap: 1.4rem; flex-wrap: wrap;
+  margin-top: 1.2rem;
+  font-family: var(--mono); font-size: .7rem;
+  letter-spacing: .06em; color: var(--ink-mute);
+  font-variant-numeric: tabular-nums;
+}
+.meters b { color: var(--ink); font-weight: 500; }
+
+/* ---------- 保有 ---------- */
+
+h3.sub {
+  margin: 1.7rem 0 .5rem;
+  font-family: var(--serif); font-size: .88rem;
+  font-weight: 600; letter-spacing: .2em; color: var(--ink-mute);
+}
+
+table { width: 100%; border-collapse: collapse; }
+
+.holdings { font-family: var(--mono); font-size: .76rem; font-variant-numeric: tabular-nums; }
+.holdings th {
+  text-align: right; font-weight: 400; font-size: .6rem;
+  letter-spacing: .12em; color: var(--ink-mute);
+  padding: .35rem .3rem; border-bottom: 1px solid var(--rule);
+}
+.holdings th:first-child, .holdings td:first-child { text-align: left; }
+.holdings td { padding: .5rem .3rem; text-align: right; border-bottom: 1px solid var(--rule-soft); }
+.holdings .tk { letter-spacing: .04em; }
+.holdings .w  { color: var(--ink-mute); font-size: .68rem; }
+
+.empty {
+  padding: 1.4rem 0;
+  font-family: var(--serif); color: var(--ink-mute);
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+/* ---------- 日報 ---------- */
+
+.picker { display: flex; align-items: center; gap: .7rem; margin-bottom: 1.3rem; }
+.picker-label {
+  font-family: var(--mono); font-size: .62rem;
+  letter-spacing: .18em; color: var(--ink-mute);
+}
+select {
+  flex: 1;
+  appearance: none;
+  font-family: var(--mono); font-size: .85rem;
+  padding: .5rem .7rem;
+  color: var(--ink);
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+}
+
+.paper {
+  background: var(--paper-2);
+  border: 1px solid var(--rule-soft);
+  padding: 1.5rem 1.25rem;
+  animation: rise .5s cubic-bezier(.2,.7,.3,1) backwards;
+}
+.paper h1, .paper h2, .paper h3 {
+  font-family: var(--serif); letter-spacing: .1em; line-height: 1.5;
+}
+.paper h1 { font-size: 1.25rem; margin: 0 0 1rem; }
+.paper h2 {
+  font-size: 1.02rem; margin: 1.9rem 0 .6rem;
+  padding-bottom: .3rem; border-bottom: 1px solid var(--rule);
+}
+.paper h3 { font-size: .92rem; margin: 1.4rem 0 .4rem; color: var(--ink-mute); }
+.paper p  { margin: .75rem 0; }
+.paper ul, .paper ol { margin: .7rem 0; padding-left: 1.3rem; }
+.paper li { margin: .3rem 0; }
+.paper code {
+  font-family: var(--mono); font-size: .82em;
+  background: var(--paper-3); padding: .1em .35em; border-radius: 2px;
+}
+.paper pre {
+  font-family: var(--mono); font-size: .75rem;
+  background: var(--paper-3); padding: .8rem; overflow-x: auto;
+}
+.paper pre code { background: none; padding: 0; }
+.paper blockquote {
+  margin: .9rem 0; padding-left: .9rem;
+  border-left: 2px solid var(--shu); color: var(--ink-mute);
+}
+.paper hr { border: 0; border-top: 1px solid var(--rule); margin: 1.6rem 0; }
+.paper a { color: var(--shu); }
+.tw { overflow-x: auto; margin: .9rem 0; }
+.paper table { font-family: var(--mono); font-size: .74rem; font-variant-numeric: tabular-nums; }
+.paper th, .paper td {
+  padding: .4rem .55rem; text-align: left;
+  border-bottom: 1px solid var(--rule-soft); white-space: nowrap;
+}
+.paper th { color: var(--ink-mute); font-weight: 400; border-bottom-color: var(--rule); }
+
+/* ---------- 履歴 ---------- */
+
+.filters { display: flex; gap: .5rem; margin-bottom: 1rem; }
+.filters button {
+  appearance: none; cursor: pointer;
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .1em;
+  padding: .35rem .8rem;
+  color: var(--ink-mute);
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  transition: .2s;
+}
+.filters button.on { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+@media (prefers-color-scheme: dark) { .filters button.on { color: #14120f; } }
+
+.note {
+  margin: 0 0 1.4rem;
+  font-size: .78rem; line-height: 1.7; color: var(--ink-mute);
+  padding-left: .8rem; border-left: 2px solid var(--rule);
+}
+
+.ledger { list-style: none; margin: 0; padding: 0; }
+
+.ledger li {
+  display: grid;
+  grid-template-columns: 1.1rem 1fr;
+  gap: .1rem .6rem;
+  padding: .8rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.mark { font-family: var(--mono); font-size: .9rem; line-height: 1.5; }
+.mark.ok { color: var(--shu); }
+.mark.ng { color: var(--ink-mute); }
+
+.entry-head {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem;
+  font-family: var(--mono); font-size: .78rem; font-variant-numeric: tabular-nums;
+}
+.entry-head .side { letter-spacing: .12em; font-size: .66rem; color: var(--ink-mute); }
+.entry-head .tk { font-weight: 500; letter-spacing: .04em; }
+.entry-head .when { margin-left: auto; font-size: .64rem; color: var(--ink-mute); }
+.entry-why {
+  grid-column: 2;
+  margin: .3rem 0 0; font-size: .8rem; line-height: 1.65; color: var(--ink-mute);
+}
+.entry-why.rejected { color: var(--ai); }
+
+/* ---------- 足 ---------- */
+
+footer { padding: 1.5rem 0 2.5rem; }
+footer p {
+  margin: .9rem 0 0;
+  font-size: .72rem; line-height: 1.7; color: var(--ink-mute);
+}
+.stamp { font-family: var(--mono); font-size: .6rem; letter-spacing: .1em; }
+
+.loading { padding: 3rem 0; text-align: center; color: var(--ink-mute); font-family: var(--serif); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after { animation: none !important; transition: none !important; }
+  .draw { stroke-dashoffset: 0; }
+}

@@ -1,0 +1,111 @@
+name: kabusim session
+
+# GitHub Actions の cron は UTC 固定。JST = UTC+9 なので9時間引いてある。
+# 米国市場は夏時間で1時間ずれるため、11月の切り替え時に us-open / us-close /
+# report の3本を下の「冬時間」の値に差し替えること。忘れると開場前・引け後に走る。
+#
+#   セッション   JST         UTC(夏)      UTC(冬)
+#   jp-open      平日 09:15  15 0 * * 1-5   同左
+#   jp-close     平日 14:45  45 5 * * 1-5   同左
+#   us-open      平日 23:00  0 14 * * 1-5   0 15 * * 1-5   (JST 00:00)
+#   us-close     火土 04:15  15 19 * * 1-5  45 19 * * 1-5  (JST 04:45)
+#   report       火土 06:00  0 21 * * 1-5   0 22 * * 1-5   (JST 07:00)
+#
+# us-close は「引けの15分前」ではなく45分前に置いてある。GitHub Actions の
+# スケジュールは混雑時に10〜30分遅れることがあり、15分前だと引け後に走るため。
+
+on:
+  schedule:
+    - cron: "15 0 * * 1-5"     # jp-open   JST 09:15 平日
+    - cron: "45 5 * * 1-5"     # jp-close  JST 14:45 平日
+    - cron: "0 14 * * 1-5"     # us-open   JST 23:00 平日
+    - cron: "15 19 * * 1-5"    # us-close  JST 04:15 火〜土
+    - cron: "0 21 * * 1-5"     # report    JST 06:00 火〜土
+  workflow_dispatch:
+    inputs:
+      session:
+        description: "手動で実行するセッション"
+        required: true
+        type: choice
+        options: [jp-open, jp-close, us-open, us-close, report]
+
+permissions:
+  contents: write
+
+# state.json を複数のジョブが同時に書き換えると台帳が壊れる。直列化する。
+concurrency:
+  group: kabusim-ledger
+  cancel-in-progress: false
+
+jobs:
+  session:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: セッション種別を決める
+        id: sess
+        run: |
+          case "${{ github.event.schedule }}" in
+            "15 0 * * 1-5")  S=jp-open  ;;
+            "45 5 * * 1-5")  S=jp-close ;;
+            "0 14 * * 1-5")  S=us-open  ;;
+            "15 19 * * 1-5") S=us-close ;;
+            "0 21 * * 1-5")  S=report   ;;
+            *)               S="${{ inputs.session }}" ;;
+          esac
+          echo "session=$S" >> "$GITHUB_OUTPUT"
+          echo "セッション: $S"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: 依存関係
+        run: |
+          python -m pip install --quiet --upgrade pip
+          python -m pip install --quiet yfinance
+          npm install -g @anthropic-ai/claude-code
+
+      - name: 台帳の存在確認
+        run: |
+          if [ ! -f state.json ]; then
+            echo "state.json が無い。先に broker.py init を実行してコミットすること。" >&2
+            exit 1
+          fi
+
+      - name: セッション実行
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          PYTHON: python
+          MAX_TURNS: "40"
+        run: bash session.sh "${{ steps.sess.outputs.session }}"
+
+      - name: PWA 用のデータを生成
+        if: always()
+        run: python build_site.py
+
+      - name: 記録をコミット
+        if: always()
+        run: |
+          git config user.name "kabusim-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "変更なし。コミットしない。"
+          else
+            git commit -m "${{ steps.sess.outputs.session }}: $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M') JST"
+            git push
+          fi
+
+      - name: 失敗時にログを残す
+        if: failure()
+        run: |
+          echo "--- 直近のログ ---"
+          tail -n 60 "logs/${{ steps.sess.outputs.session }}.log" 2>/dev/null || echo "ログなし"

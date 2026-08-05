@@ -1,0 +1,10 @@
+# CI(Linux) で session.sh が CRLF になると bash が壊れるので改行を固定する。
+* text=auto eol=lf
+
+# PowerShell は Windows でしか使わないので CRLF のままにしておく
+*.ps1 text eol=crlf
+
+# 生成物・バイナリ
+*.png  binary
+*.jsonl text eol=lf
+*.csv   text eol=lf
