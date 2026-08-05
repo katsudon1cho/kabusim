@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>案1 ソフトUI — ライト / ダーク比較</title>
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#101014">
+<style>
+:root{
+  --g-bg:#101014;--g-card:#17171d;--g-line:#26262f;--g-tx:#e8e8ee;--g-dim:#8a8a99;--g-ac:#7ee0b8;
+  --g-sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic UI","Noto Sans JP",sans-serif;
+  --g-mono:ui-monospace,SFMono-Regular,"SF Mono","Cascadia Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:0 1rem 4rem;background:var(--g-bg);color:var(--g-tx);font-family:var(--g-sans);line-height:1.75}
+.wrap{max-width:78rem;margin-inline:auto}
+.intro{padding:2.5rem 0 1rem;max-width:44rem}
+.intro h1{margin:0 0 .6rem;font-size:1.5rem}
+.intro p{margin:.6rem 0;color:var(--g-dim);font-size:.9rem}
+.intro a{color:var(--g-ac)}
+.warn{background:var(--g-card);border:1px solid var(--g-line);border-left:3px solid #e0a35c;
+  border-radius:12px;padding:1rem 1.2rem;margin:1.4rem 0 2.4rem;max-width:44rem;font-size:.85rem;color:#c6c6d4}
+.warn b{color:var(--g-tx)}
+
+.gal{display:grid;gap:2.6rem;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));align-items:start}
+.demo{min-width:0}
+.demo-h{display:flex;align-items:baseline;gap:.6rem;margin-bottom:.15rem}
+.demo-n{font-family:var(--g-mono);font-size:.7rem;color:var(--g-dim);letter-spacing:.1em}
+.demo-h h2{margin:0;font-size:1rem}
+.demo>p{margin:.1rem 0 .9rem;font-size:.79rem;color:var(--g-dim);line-height:1.65}
+
+.frame{width:100%;max-width:375px;height:640px;overflow:hidden;border:9px solid #2a2a33;border-radius:34px;
+  box-shadow:0 18px 50px #0009,inset 0 0 0 1px #ffffff0d}
+.frame>.app{width:100%;height:100%;overflow-y:auto;scrollbar-width:none}
+.frame>.app::-webkit-scrollbar{display:none}
+
+/* ===== 共通の骨格 ===== */
+.app{padding:1.1rem}
+.top{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:1rem}
+.ttl{font-size:.9rem;font-weight:650}
+.sub{font-size:.6rem;opacity:.6}
+.row{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem}
+.bk{font-size:.85rem;font-weight:650}
+.ccy{font-size:.58rem;opacity:.55;letter-spacing:.14em}
+.val{font-size:2.2rem;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.1;margin:.5rem 0 .1rem}
+.chg{font-size:.85rem;font-weight:650;font-variant-numeric:tabular-nums}
+.spark{display:block;width:100%;height:auto;margin:.8rem 0 .5rem}
+.spark path{fill:none;stroke-linejoin:round;stroke-linecap:round}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:.7rem 0}
+.st .k{font-size:.55rem;letter-spacing:.12em;opacity:.55;text-transform:uppercase}
+.st .v{font-size:.95rem;font-weight:650;font-variant-numeric:tabular-nums}
+.hl{font-size:.55rem;letter-spacing:.16em;opacity:.5;margin:1rem 0 .5rem;text-transform:uppercase}
+.pos{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;padding:.5rem 0;font-variant-numeric:tabular-nums}
+.pos .tk{font-weight:650;font-size:.85rem}
+.pos .qt{font-size:.65rem;opacity:.6}
+.pos .mv{font-size:.85rem}
+.pos .pl{font-size:.7rem;font-weight:650}
+.up{color:var(--up)}.dn{color:var(--dn)}
+.card{margin-bottom:.9rem}
+
+/* ===== A: 元のライト（比較用） ===== */
+.mL{--up:#2f9e6e;--dn:#c95466;background:#e8eaef;color:#3a3f4b;
+    font-family:-apple-system,"Hiragino Sans","Yu Gothic UI","Noto Sans JP",sans-serif}
+.mL .top{color:#5a6070}
+.mL .card{background:#e8eaef;border-radius:22px;padding:1.15rem;
+  box-shadow:7px 7px 16px #c5c8d0,-7px -7px 16px #ffffff}
+.mL .val{color:#2b303b}
+.mL .chg{display:inline-block;padding:.2rem .6rem;border-radius:999px;background:#e8eaef;
+  box-shadow:inset 3px 3px 6px #c5c8d0,inset -3px -3px 6px #fff;color:var(--up)}
+.mL .spark path.a{stroke:var(--up);stroke-width:2.4}
+.mL .spark path.b{stroke:#a8adba;stroke-width:1.2;stroke-dasharray:3 3}
+.mL .st{background:#e8eaef;border-radius:14px;padding:.6rem .7rem;
+  box-shadow:inset 3px 3px 7px #c9ccd4,inset -3px -3px 7px #fff}
+.mL .pos{border-bottom:1px solid #d6d9e0}
+
+/* ===== B: ダーク（推奨トーン・中間グレー地） =====
+   地を真っ黒にすると影が沈んで立体感が消える。#262a33 くらいが下限。 */
+.mD{--up:#3ddc97;--dn:#ff7a90;background:#262a33;color:#c9cfdb;
+    font-family:-apple-system,"Hiragino Sans","Yu Gothic UI","Noto Sans JP",sans-serif}
+.mD .top{color:#8d95a5}
+.mD .card{background:#262a33;border-radius:22px;padding:1.15rem;
+  box-shadow:7px 7px 16px #171a21,-7px -7px 16px #353b47}
+.mD .val{color:#eef2f8}
+.mD .chg{display:inline-block;padding:.2rem .6rem;border-radius:999px;background:#262a33;
+  box-shadow:inset 3px 3px 6px #171a21,inset -3px -3px 6px #353b47;color:var(--up)}
+.mD .spark path.a{stroke:var(--up);stroke-width:2.4}
+.mD .spark path.b{stroke:#5c6474;stroke-width:1.2;stroke-dasharray:3 3}
+.mD .st{background:#262a33;border-radius:14px;padding:.6rem .7rem;
+  box-shadow:inset 3px 3px 7px #191d24,inset -3px -3px 7px #343a46}
+.mD .pos{border-bottom:1px solid #2f343e}
+
+/* ===== C: ダーク（真っ黒寄り・効果が消える例） ===== */
+.mK{--up:#3ddc97;--dn:#ff7a90;background:#111318;color:#aab2c0;
+    font-family:-apple-system,"Hiragino Sans","Yu Gothic UI","Noto Sans JP",sans-serif}
+.mK .top{color:#767e8c}
+.mK .card{background:#111318;border-radius:22px;padding:1.15rem;
+  box-shadow:7px 7px 16px #08090c,-7px -7px 16px #1a1d24}
+.mK .val{color:#e6eaf1}
+.mK .chg{display:inline-block;padding:.2rem .6rem;border-radius:999px;background:#111318;
+  box-shadow:inset 3px 3px 6px #08090c,inset -3px -3px 6px #1a1d24;color:var(--up)}
+.mK .spark path.a{stroke:var(--up);stroke-width:2.4}
+.mK .spark path.b{stroke:#4a515e;stroke-width:1.2;stroke-dasharray:3 3}
+.mK .st{background:#111318;border-radius:14px;padding:.6rem .7rem;
+  box-shadow:inset 3px 3px 7px #08090c,inset -3px -3px 7px #1a1d24}
+.mK .pos{border-bottom:1px solid #1c1f26}
+
+@media(max-width:700px){.gal{grid-template-columns:1fr}.frame{height:600px;margin-inline:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="intro">
+  <h1>案1 ソフトUI — ライト / ダーク比較</h1>
+  <p>同じ設計をそのまま暗い配色に置き換えたもの。<a href="mockups.html">← 案1〜7に戻る</a></p>
+</div>
+
+<div class="warn">
+  <b>先に断っておくこと。</b> ニューモーフィズムは「左上から光が当たっている」という前提で、
+  明るいハイライトと暗い影の<b>対比</b>だけで立体感を作る手法です。地が暗くなるほどハイライトに使える
+  明るさの幅が狭くなるため、<b>ダークでは効果が弱まります。</b>
+  下のBとCを見比べると分かりますが、地を真っ黒に近づける（C）と影が背景に沈んで、
+  ただの平らな面になります。ダークで成立させるなら<b>中間グレー（B）が下限</b>で、
+  黒基調にはできません。
+</div>
+
+<div class="gal" id="gal"></div>
+
+</div>
+
+<script>
+const A = "M0 46 L14 44 L28 48 L42 40 L56 43 L70 36 L84 38 L98 30 L112 33 L126 26 L140 28 L154 20 L168 24 L182 16 L196 18 L210 12 L224 14 L238 8 L252 10 L266 5";
+const B = "M0 48 L14 47 L28 49 L42 45 L56 46 L70 43 L84 44 L98 41 L112 42 L126 38 L140 39 L154 36 L168 37 L182 34 L196 35 L210 32 L224 33 L238 30 L252 31 L266 28";
+
+function card(book, ccy, val, chg, bench, diff, cash, cashPct, holds) {
+  return `
+  <div class="card">
+    <div class="row"><span class="bk">${book}</span><span class="ccy">${ccy}</span></div>
+    <div class="val">${val}</div>
+    <div class="chg">${chg}</div>
+    <svg class="spark" viewBox="0 0 266 56" preserveAspectRatio="none" aria-hidden="true">
+      <path class="b" d="${B}"/><path class="a" d="${A}"/>
+    </svg>
+    <div class="stats">
+      <div class="st"><div class="k">ベンチ</div><div class="v">${bench}</div></div>
+      <div class="st"><div class="k">差</div><div class="v">${diff}</div></div>
+    </div>
+    <div class="hl">現金 ${cash} · ${cashPct}</div>
+    ${holds.map(h => `
+      <div class="pos">
+        <span><span class="tk">${h[0]}</span> <span class="qt">${h[1]}</span></span>
+        <span><span class="mv">${h[2]}</span> <span class="pl ${h[4]}">${h[3]}</span></span>
+      </div>`).join("")}
+  </div>`;
+}
+
+const APP = `
+  <div class="top"><span class="ttl">仮想運用記録</span><span class="sub">2026-08-06 09:15</span></div>
+  ${card("米国株ブック","USD","$51,240","+2.48%","SPY +1.92%","+0.56pt","$12,480","24.4%",
+        [["LLY","3株","$3,494","+0.3%","up"],["NVDA","12株","$2,180","-1.2%","dn"]])}
+  ${card("日本株ブック","JPY","¥20,310,000","+1.55%","1306.T +2.01%","-0.46pt","¥4,820,000","23.7%",
+        [["7203.T","300株","¥875,550","+2.1%","up"],["4568.T","200株","¥500,000","-0.8%","dn"]])}
+`;
+
+const V = [
+  ["mL","A｜元のライト（比較用）","最初に出した案1そのもの。白い面に柔らかい二重の影が乗り、押しボタンのような立体感が出る。"],
+  ["mD","B｜ダーク（中間グレー地）","地を #262a33 にした版。暗い側だが立体感は残っている。ダークでニューモーフィズムを成立させるなら、この明るさが下限。"],
+  ["mK","C｜ダーク（黒寄り・失敗例）","地を #111318 まで落とした版。影が背景に沈み、カードの輪郭がほぼ消える。黒基調と両立しないことが分かる例。"],
+];
+
+document.getElementById("gal").innerHTML = V.map(v => `
+  <section class="demo">
+    <div class="demo-h"><span class="demo-n">案1</span><h2>${v[1]}</h2></div>
+    <p>${v[2]}</p>
+    <div class="frame ${v[0]}"><div class="app">${APP}</div></div>
+  </section>`).join("");
+</script>
+</body>
+</html>
