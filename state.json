@@ -1,0 +1,21 @@
+{
+  "start_date": "2026-08-06",
+  "books": {
+    "us": {
+      "start_equity": 50000.0,
+      "cash": 50000.0,
+      "positions": {},
+      "bench_shares": 64.9038777690116,
+      "last_trade": {},
+      "buys_today": {}
+    },
+    "jp": {
+      "start_equity": 20000000.0,
+      "cash": 20000000.0,
+      "positions": {},
+      "bench_shares": 48496.60595538262,
+      "last_trade": {},
+      "buys_today": {}
+    }
+  }
+}
