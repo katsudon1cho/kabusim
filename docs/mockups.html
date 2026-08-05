@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>デザイン案 7種 — 仮想運用記録</title>
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#101014">
+<style>
+/* ===== ギャラリーの外枠。中身の7案とは配色を分けて中立にする ===== */
+:root{
+  --g-bg:#101014; --g-card:#17171d; --g-line:#26262f; --g-tx:#e8e8ee; --g-dim:#8a8a99;
+  --g-sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic UI","Noto Sans JP",sans-serif;
+  --g-mono:ui-monospace,SFMono-Regular,"SF Mono","Cascadia Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:0 1rem 4rem;background:var(--g-bg);color:var(--g-tx);font-family:var(--g-sans);line-height:1.7}
+.wrap{max-width:78rem;margin-inline:auto}
+.intro{padding:2.5rem 0 1.5rem;max-width:38rem}
+.intro h1{margin:0 0 .5rem;font-size:1.5rem;letter-spacing:.02em}
+.intro p{margin:.5rem 0;color:var(--g-dim);font-size:.9rem}
+.intro code{font-family:var(--g-mono);font-size:.85em;background:var(--g-card);padding:.1em .4em;border-radius:4px}
+
+.gal{display:grid;gap:2.5rem;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));align-items:start}
+.demo{min-width:0}
+.demo-h{display:flex;align-items:baseline;gap:.6rem;margin-bottom:.15rem}
+.demo-n{font-family:var(--g-mono);font-size:.7rem;color:var(--g-dim);letter-spacing:.1em}
+.demo-h h2{margin:0;font-size:1.02rem;letter-spacing:.02em}
+.demo>p{margin:.1rem 0 .9rem;font-size:.8rem;color:var(--g-dim);line-height:1.65}
+
+/* 端末枠。中立のグレーにして各案の配色と干渉させない */
+.frame{
+  width:100%;max-width:375px;height:660px;overflow:hidden;
+  border:9px solid #2a2a33;border-radius:34px;
+  box-shadow:0 18px 50px #0009, inset 0 0 0 1px #ffffff0d;
+}
+.frame>.app{width:100%;height:100%;overflow-y:auto;scrollbar-width:none}
+.frame>.app::-webkit-scrollbar{display:none}
+
+/* ===== 全案で共通の骨格（見た目は各案のCSSが決める） ===== */
+.app{padding:1.1rem}
+.top{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:1rem}
+.ttl{font-size:.9rem;font-weight:650}
+.sub{font-size:.6rem;opacity:.6}
+.card{margin-bottom:.9rem}
+.row{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem}
+.bk{font-size:.85rem;font-weight:650}
+.ccy{font-size:.58rem;opacity:.55;letter-spacing:.14em}
+.val{font-size:2.2rem;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.1;margin:.5rem 0 .1rem}
+.chg{font-size:.85rem;font-weight:650;font-variant-numeric:tabular-nums}
+.spark{display:block;width:100%;height:auto;margin:.8rem 0 .5rem}
+.spark path{fill:none;stroke-linejoin:round;stroke-linecap:round}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:.7rem 0}
+.st .k{font-size:.55rem;letter-spacing:.12em;opacity:.55;text-transform:uppercase}
+.st .v{font-size:.95rem;font-weight:650;font-variant-numeric:tabular-nums}
+.hl{font-size:.55rem;letter-spacing:.16em;opacity:.5;margin:1rem 0 .5rem;text-transform:uppercase}
+.pos{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;padding:.5rem 0;font-variant-numeric:tabular-nums}
+.pos .tk{font-weight:650;font-size:.85rem}
+.pos .qt{font-size:.65rem;opacity:.6}
+.pos .mv{font-size:.85rem}
+.pos .pl{font-size:.7rem;font-weight:650}
+.up{color:var(--up)} .dn{color:var(--dn)}
+
+/* =========================================================
+   案1 ソフトUI / ニューモーフィズム
+   ========================================================= */
+.m1{--up:#2f9e6e;--dn:#c95466;background:#e8eaef;color:#3a3f4b;
+    font-family:-apple-system,"Hiragino Sans","Yu Gothic UI","Noto Sans JP",sans-serif}
+.m1 .top{color:#5a6070}
+.m1 .card{background:#e8eaef;border-radius:22px;padding:1.15rem;
+  box-shadow:7px 7px 16px #c5c8d0, -7px -7px 16px #ffffff}
+.m1 .val{color:#2b303b}
+.m1 .chg{display:inline-block;padding:.2rem .6rem;border-radius:999px;background:#e8eaef;
+  box-shadow:inset 3px 3px 6px #c5c8d0, inset -3px -3px 6px #fff;color:var(--up)}
+.m1 .spark path.a{stroke:var(--up);stroke-width:2.4}
+.m1 .spark path.b{stroke:#a8adba;stroke-width:1.2;stroke-dasharray:3 3}
+.m1 .st{background:#e8eaef;border-radius:14px;padding:.6rem .7rem;
+  box-shadow:inset 3px 3px 7px #c9ccd4, inset -3px -3px 7px #fff}
+.m1 .pos{border-bottom:1px solid #d6d9e0}
+
+/* =========================================================
+   案2 ブルータリスト / ターミナル
+   ========================================================= */
+.m2{--up:#33ff88;--dn:#ff4d5e;background:#050505;color:#33ff88;
+    font-family:ui-monospace,SFMono-Regular,"Cascadia Mono",Consolas,monospace}
+.m2 .app{padding:.9rem}
+.m2 .top{border-bottom:1px dashed #33ff8855;padding-bottom:.5rem}
+.m2 .ttl{letter-spacing:.14em;text-transform:uppercase;font-size:.72rem}
+.m2 .card{border:1px solid #33ff8855;padding:.8rem;margin-bottom:.7rem}
+.m2 .bk::before{content:"> "}
+.m2 .val{font-size:1.85rem;font-weight:400;letter-spacing:0;text-shadow:0 0 12px #33ff8866}
+.m2 .chg{color:var(--up)}
+.m2 .chg::after{content:" ▲"}
+.m2 .spark path.a{stroke:var(--up);stroke-width:1.6}
+.m2 .spark path.b{stroke:#1f6b45;stroke-width:1.2;stroke-dasharray:2 3}
+.m2 .stats{gap:0;border:1px solid #33ff8833}
+.m2 .st{padding:.5rem .6rem}
+.m2 .st+.st{border-left:1px solid #33ff8833}
+.m2 .hl{color:#33ff8899}
+.m2 .hl::before{content:"── "}
+.m2 .pos{border-bottom:1px dashed #33ff8833;font-size:.78rem}
+.m2 .pos .tk::before{content:"[ ";opacity:.5}
+.m2 .pos .tk::after{content:" ]";opacity:.5}
+
+/* =========================================================
+   案3 エディトリアル・マガジン（明るい）
+   ========================================================= */
+.m3{--up:#1a6b4a;--dn:#a8323f;background:#fbfaf7;color:#1a1a18;
+    font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif}
+.m3 .top{border-bottom:2px solid #1a1a18;padding-bottom:.55rem}
+.m3 .ttl{font-size:1.05rem;letter-spacing:.2em}
+.m3 .sub{font-family:ui-monospace,Consolas,monospace;letter-spacing:.1em}
+.m3 .card{padding:1.2rem 0;border-bottom:1px solid #dcd8cf}
+.m3 .bk{font-size:.95rem;letter-spacing:.16em}
+.m3 .ccy{font-family:ui-monospace,Consolas,monospace}
+.m3 .val{font-size:2.6rem;font-weight:400;letter-spacing:-.02em;
+  font-family:ui-monospace,"SF Mono",Consolas,monospace}
+.m3 .chg{color:var(--up);font-family:ui-monospace,Consolas,monospace;font-weight:400}
+.m3 .spark path.a{stroke:#1a1a18;stroke-width:1.6}
+.m3 .spark path.b{stroke:#b6b0a4;stroke-width:1;stroke-dasharray:3 3}
+.m3 .stats{border-top:1px solid #dcd8cf;border-bottom:1px solid #dcd8cf;gap:0}
+.m3 .st{padding:.6rem .2rem}
+.m3 .st+.st{border-left:1px solid #dcd8cf;padding-left:.8rem}
+.m3 .st .k,.m3 .hl{font-family:ui-monospace,Consolas,monospace;letter-spacing:.18em}
+.m3 .st .v{font-family:ui-monospace,Consolas,monospace;font-weight:400}
+.m3 .pos{border-bottom:1px solid #ebe7de;font-family:ui-monospace,Consolas,monospace;font-size:.78rem}
+
+/* =========================================================
+   案4 ネオン / サイバーパンク
+   ========================================================= */
+.m4{--up:#00ffc3;--dn:#ff2d78;background:#08060f;color:#e6e0ff;
+    font-family:-apple-system,"Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif;
+    background-image:linear-gradient(#7b2dff12 1px,transparent 1px),linear-gradient(90deg,#7b2dff12 1px,transparent 1px);
+    background-size:26px 26px}
+.m4 .ttl{color:#ff2d78;text-shadow:0 0 10px #ff2d7899;letter-spacing:.14em;text-transform:uppercase;font-size:.75rem}
+.m4 .card{border:1px solid #ff2d7844;border-radius:2px;padding:1rem;background:#0d0819cc;
+  box-shadow:0 0 24px #7b2dff26, inset 0 0 30px #ff2d7808}
+.m4 .bk{color:#00ffc3;text-shadow:0 0 8px #00ffc366}
+.m4 .val{color:#fff;text-shadow:0 0 18px #00ffc366,0 0 40px #7b2dff66}
+.m4 .chg{color:var(--up);text-shadow:0 0 10px #00ffc399}
+.m4 .spark path.a{stroke:var(--up);stroke-width:2;filter:drop-shadow(0 0 5px #00ffc3)}
+.m4 .spark path.b{stroke:#ff2d78;stroke-width:1.2;stroke-dasharray:3 3;opacity:.8}
+.m4 .st{border:1px solid #7b2dff44;padding:.55rem .7rem;background:#12082199}
+.m4 .st .k{color:#a98cff}
+.m4 .hl{color:#ff2d78;letter-spacing:.24em}
+.m4 .pos{border-bottom:1px solid #7b2dff33}
+.m4 .pos .tk{color:#00ffc3}
+
+/* =========================================================
+   案5 和モダン（藍と金）
+   ========================================================= */
+.m5{--up:#c9a227;--dn:#b5495b;background:#101a2b;color:#e9e5da;
+    font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;
+    background-image:radial-gradient(#ffffff08 1px,transparent 1px);background-size:14px 14px}
+.m5 .top{border-bottom:1px solid #c9a22740;padding-bottom:.6rem}
+.m5 .ttl{letter-spacing:.3em;font-size:.9rem;color:#c9a227}
+.m5 .card{border:1px solid #c9a22733;padding:1.1rem;background:#0b1524cc;position:relative}
+.m5 .card::before{content:"";position:absolute;top:8px;left:8px;width:18px;height:1px;background:#c9a22788}
+.m5 .card::after{content:"";position:absolute;top:8px;left:8px;width:1px;height:18px;background:#c9a22788}
+.m5 .bk{letter-spacing:.22em;font-size:.9rem}
+.m5 .ccy{font-family:ui-monospace,Consolas,monospace;color:#c9a22799}
+.m5 .val{font-family:ui-monospace,"SF Mono",Consolas,monospace;font-weight:400;color:#f2ede0}
+.m5 .chg{color:var(--up);font-family:ui-monospace,Consolas,monospace;font-weight:400}
+.m5 .spark path.a{stroke:#c9a227;stroke-width:2}
+.m5 .spark path.b{stroke:#5b7ba6;stroke-width:1.1;stroke-dasharray:4 4}
+.m5 .st{border:1px solid #c9a22726;padding:.6rem .7rem}
+.m5 .st .k{color:#c9a22799;letter-spacing:.2em}
+.m5 .st .v,.m5 .pos{font-family:ui-monospace,Consolas,monospace}
+.m5 .hl{color:#c9a227aa;letter-spacing:.3em}
+.m5 .pos{border-bottom:1px solid #c9a2271f;font-size:.78rem}
+
+/* =========================================================
+   案6 スイス / インターナショナル
+   ========================================================= */
+.m6{--up:#e2231a;--dn:#111;background:#fff;color:#111;
+    font-family:-apple-system,"Helvetica Neue",Helvetica,"Hiragino Sans","Noto Sans JP",Arial,sans-serif}
+.m6 .app{padding:1.3rem 1.1rem}
+.m6 .top{border-bottom:3px solid #111;padding-bottom:.4rem;margin-bottom:1.3rem}
+.m6 .ttl{font-size:.78rem;font-weight:700;letter-spacing:.02em;text-transform:uppercase}
+.m6 .sub{font-weight:500}
+.m6 .card{border-bottom:1px solid #111;padding-bottom:1.1rem;margin-bottom:1.3rem}
+.m6 .bk{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.m6 .ccy{font-weight:700;color:var(--up)}
+.m6 .val{font-size:2.9rem;font-weight:700;letter-spacing:-.055em}
+.m6 .chg{color:var(--up);font-weight:700}
+.m6 .spark path.a{stroke:var(--up);stroke-width:2.6}
+.m6 .spark path.b{stroke:#111;stroke-width:1;stroke-dasharray:4 3}
+.m6 .stats{gap:0;border-top:1px solid #111}
+.m6 .st{padding:.55rem 0}
+.m6 .st+.st{padding-left:.9rem;border-left:1px solid #111}
+.m6 .st .k{font-weight:700;opacity:1;color:#8a8a8a;letter-spacing:.04em}
+.m6 .st .v{font-weight:700}
+.m6 .hl{font-weight:700;color:#111;opacity:1;letter-spacing:.04em}
+.m6 .pos{border-bottom:1px solid #d8d8d8}
+.m6 .pos .tk{font-weight:700}
+
+/* =========================================================
+   案7 グラス / iOS風
+   ========================================================= */
+.m7{--up:#30d998;--dn:#ff6b81;color:#f2f4ff;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Hiragino Sans","Noto Sans JP",sans-serif;
+    background:#1b1436;
+    background-image:radial-gradient(46% 34% at 12% 6%,#ff7ac8aa,transparent 70%),
+                     radial-gradient(44% 34% at 88% 14%,#5ad1ffaa,transparent 70%),
+                     radial-gradient(52% 40% at 50% 96%,#8b5cffaa,transparent 72%)}
+.m7 .card{background:#ffffff14;border:1px solid #ffffff2e;border-radius:26px;padding:1.15rem;
+  backdrop-filter:blur(22px) saturate(1.6);-webkit-backdrop-filter:blur(22px) saturate(1.6);
+  box-shadow:0 10px 34px #0000004d, inset 0 1px 0 #ffffff33}
+.m7 .val{text-shadow:0 2px 14px #0000004d}
+.m7 .chg{display:inline-block;padding:.18rem .55rem;border-radius:999px;background:#30d99826;color:var(--up)}
+.m7 .spark path.a{stroke:var(--up);stroke-width:2.4}
+.m7 .spark path.b{stroke:#ffffff77;stroke-width:1.2;stroke-dasharray:3 3}
+.m7 .st{background:#ffffff12;border:1px solid #ffffff1f;border-radius:16px;padding:.6rem .75rem}
+.m7 .pos{border-bottom:1px solid #ffffff1a}
+
+@media(max-width:700px){
+  .gal{grid-template-columns:1fr}
+  .frame{height:620px;margin-inline:auto}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="intro">
+  <h1>デザイン案 7種</h1>
+  <p>同じデータを7通りの見た目で並べたもの。中身と数字はすべて共通なので、
+     違いはデザインだけ。実データではなく比較用の見本。</p>
+  <p>気に入った番号を教えてください。組み合わせ（例：<code>案6の骨格に案4の配色</code>）でも構いません。</p>
+</div>
+
+<div class="gal" id="gal"></div>
+
+</div>
+
+<script>
+/* 骨格は全案で共通。各案は CSS だけで見た目を変えている */
+const A = "M0 46 L14 44 L28 48 L42 40 L56 43 L70 36 L84 38 L98 30 L112 33 L126 26 L140 28 L154 20 L168 24 L182 16 L196 18 L210 12 L224 14 L238 8 L252 10 L266 5";
+const B = "M0 48 L14 47 L28 49 L42 45 L56 46 L70 43 L84 44 L98 41 L112 42 L126 38 L140 39 L154 36 L168 37 L182 34 L196 35 L210 32 L224 33 L238 30 L252 31 L266 28";
+
+const DESIGNS = [
+  ["ソフトUI / ニューモーフィズム",
+   "淡いグレーに柔らかい二重の影。押しボタンのような立体感で、金融らしさより触り心地を優先した案。数字が浮き上がって見える。明るい場所向き。"],
+  ["ブルータリスト / ターミナル",
+   "等幅・破線・CRT緑。装飾を全部落として情報密度に振り切った案。「計器」として読むならこれが一番速い。好みははっきり分かれる。"],
+  ["エディトリアル・マガジン",
+   "白地に明朝の見出しと大きな余白。雑誌の特集ページの体裁。成績表ではなく読み物として扱う設計で、日報を読ませたいならこれ。"],
+  ["ネオン / サイバーパンク",
+   "黒地にマゼンタとシアン、格子の背景と発光。一番派手で記憶に残るが、毎日見ると疲れる可能性がある。"],
+  ["和モダン（藍と金）",
+   "濃い藍地に金の罫。字間を広く取った明朝で、隅の飾り罫が帳簿らしさを出す。日本株を扱うことと相性がいい。"],
+  ["スイス / インターナショナル",
+   "白地に黒の太い罫と赤一色。極端に詰めた巨大な数字。装飾ゼロで構造だけで見せる、教科書的に「正しい」案。"],
+  ["グラス / iOS風",
+   "色のついたぼかし背景に半透明のガラスカード。丸みが強く、一番アプリらしい。iPhone のホーム画面になじむ。"],
+];
+
+function card(book, ccy, val, chg, bench, diff, cash, cashPct, holds) {
+  return `
+  <div class="card">
+    <div class="row"><span class="bk">${book}</span><span class="ccy">${ccy}</span></div>
+    <div class="val">${val}</div>
+    <div class="chg">${chg}</div>
+    <svg class="spark" viewBox="0 0 266 56" preserveAspectRatio="none" aria-hidden="true">
+      <path class="b" d="${B}"/><path class="a" d="${A}"/>
+    </svg>
+    <div class="stats">
+      <div class="st"><div class="k">ベンチ</div><div class="v">${bench}</div></div>
+      <div class="st"><div class="k">差</div><div class="v">${diff}</div></div>
+    </div>
+    <div class="hl">現金 ${cash} · ${cashPct}</div>
+    ${holds.map(h => `
+      <div class="pos">
+        <span><span class="tk">${h[0]}</span> <span class="qt">${h[1]}</span></span>
+        <span><span class="mv">${h[2]}</span> <span class="pl ${h[4]}">${h[3]}</span></span>
+      </div>`).join("")}
+  </div>`;
+}
+
+const APP = `
+  <div class="top"><span class="ttl">仮想運用記録</span><span class="sub">2026-08-06 09:15</span></div>
+  ${card("米国株ブック","USD","$51,240","+2.48%","SPY +1.92%","+0.56pt","$12,480","24.4%",
+        [["LLY","3株","$3,494","+0.3%","up"],["NVDA","12株","$2,180","-1.2%","dn"]])}
+  ${card("日本株ブック","JPY","¥20,310,000","+1.55%","1306.T +2.01%","-0.46pt","¥4,820,000","23.7%",
+        [["7203.T","300株","¥875,550","+2.1%","up"],["4568.T","200株","¥500,000","-0.8%","dn"]])}
+`;
+
+document.getElementById("gal").innerHTML = DESIGNS.map((d, i) => `
+  <section class="demo">
+    <div class="demo-h"><span class="demo-n">案${i + 1}</span><h2>${d[0]}</h2></div>
+    <p>${d[1]}</p>
+    <div class="frame m${i + 1}"><div class="app">${APP}</div></div>
+  </section>`).join("");
+</script>
+</body>
+</html>
