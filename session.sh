@@ -57,7 +57,21 @@ esac
 
 echo "=== $SESSION @ $STAMP ===" | tee -a "logs/${SESSION}.log"
 
+# 消費量を測るため JSON で受け取る。応答本文は record_usage.py が取り出して
+# ログに流し直すので、logs/ の読みやすさは今までどおり。
+RAW="$(mktemp)"
+trap 'rm -f "$RAW"' EXIT
+
+set +e
 claude -p "$PROMPT" \
   --allowedTools "Bash($PYTHON broker.py:*)" "WebSearch" "WebFetch" "Read" "Write(reports/*)" \
   --max-turns "$MAX_TURNS" \
-  2>&1 | tee -a "logs/${SESSION}.log"
+  --output-format json \
+  >"$RAW" 2>>"logs/${SESSION}.log"
+STATUS=$?
+set -e
+
+# 計測に失敗してもセッションの成否は claude 側の終了コードで判断する
+"$PYTHON" record_usage.py "$SESSION" "$RAW" 2>&1 | tee -a "logs/${SESSION}.log"
+
+exit "$STATUS"
