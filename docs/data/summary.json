@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-06T01:08+09:00",
+ "generated_at": "2026-08-06T01:13+09:00",
  "start_date": "2026-08-06",
  "prices_ok": true,
  "books": {
@@ -9,13 +9,13 @@
    "ccy_code": "USD",
    "bench": "SPY",
    "start_equity": 50000.0,
-   "equity": 50000.0,
-   "cash": 50000.0,
-   "cash_pct": 100.0,
-   "ret_pct": 0.0,
-   "bench_pct": 0.012,
-   "diff_pt": -0.012,
-   "buys_today": 0,
+   "equity": 49995.31,
+   "cash": 46508.32,
+   "cash_pct": 93.03,
+   "ret_pct": -0.009,
+   "bench_pct": -0.029,
+   "diff_pt": 0.019,
+   "buys_today": 1,
    "max_buys": 4,
    "universe": [
     "AAPL",
@@ -35,7 +35,17 @@
     "AMD",
     "NFLX"
    ],
-   "positions": []
+   "positions": [
+    {
+     "ticker": "LLY",
+     "shares": 3,
+     "avg_cost": 1163.89,
+     "price": 1162.33,
+     "value": 3486.99,
+     "weight_pct": 6.97,
+     "pnl_pct": -0.13
+    }
+   ]
   },
   "jp": {
    "name": "日本株ブック",
@@ -76,6 +86,18 @@
   "us": [],
   "jp": []
  },
- "trades": [],
+ "trades": [
+  {
+   "ts": "2026-08-06T01:13:39.755109+09:00",
+   "status": "FILLED",
+   "side": "BUY",
+   "ticker": "LLY",
+   "shares": 3,
+   "price": 1163.8917136230468,
+   "reason": "Q2売上+48%(23.0B、予想20.7B)。GLP-1牽引(Mounjaro+91% 9.9B、Zepbound+44% 4.9B)で通期売上ガイダンスを82-85B→85-87Bに上方修正。株価反応は+4%程度と控えめで、ガイダンス上方修正の規模に対し織り込み不足と判断。前提: GLP-1需要の構造的拡大継続。間違いと認める条件: 次回決算でMounjaro/Zepbound成長が明確に鈍化、通期ガイダンス据え置き/下方修正、または薬価規制の悪材料。想定保有期間: 次回本決算(11月頃)までの四半期単位",
+   "error": null,
+   "book": "us"
+  }
+ ],
  "reports": []
 }

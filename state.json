@@ -3,11 +3,20 @@
   "books": {
     "us": {
       "start_equity": 50000.0,
-      "cash": 50000.0,
-      "positions": {},
+      "cash": 46508.32485913086,
+      "positions": {
+        "LLY": {
+          "shares": 3,
+          "avg_cost": 1163.8917136230468
+        }
+      },
       "bench_shares": 64.9038777690116,
-      "last_trade": {},
-      "buys_today": {}
+      "last_trade": {
+        "LLY": "2026-08-06T01:13:39.754754+09:00"
+      },
+      "buys_today": {
+        "2026-08-06": 1
+      }
     },
     "jp": {
       "start_equity": 20000000.0,
