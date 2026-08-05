@@ -29,8 +29,12 @@ on:
         type: choice
         options: [jp-open, jp-close, us-open, us-close, report]
 
+# contents:write は台帳のコミット用。pages/id-token は deploy ジョブが呼ぶ
+# 再利用ワークフローに引き継ぐために必要（呼び出し側の権限しか渡らない）。
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 # state.json を複数のジョブが同時に書き換えると台帳が壊れる。直列化する。
 concurrency:

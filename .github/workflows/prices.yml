@@ -18,6 +18,13 @@ on:
     - cron: "*/15 13-20 * * 1-5"
   workflow_dispatch:
 
+# 再利用ワークフローは呼び出し側の権限しか引き継げない。
+# ここで宣言しないと deploy-pages.yml が pages:write を要求できず起動に失敗する。
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   refresh:
     uses: ./.github/workflows/deploy-pages.yml
