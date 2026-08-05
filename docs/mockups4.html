@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>デザイン案 19〜23（実在物を参照）— 仮想運用記録</title>
+<meta name="color-scheme" content="dark">
+<style>
+:root{
+  --g-bg:#141414;--g-card:#1c1c1c;--g-line:#2c2c2c;--g-tx:#e9e9e6;--g-dim:#8d8d87;
+  --g-sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic UI","Noto Sans JP",sans-serif;
+  --g-mono:ui-monospace,SFMono-Regular,"SF Mono","Cascadia Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:0 1rem 4rem;background:var(--g-bg);color:var(--g-tx);font-family:var(--g-sans);line-height:1.75}
+.wrap{max-width:78rem;margin-inline:auto}
+.intro{padding:2.5rem 0 1rem;max-width:44rem}
+.intro h1{margin:0 0 .6rem;font-size:1.5rem}
+.intro p{margin:.6rem 0;color:var(--g-dim);font-size:.9rem}
+.intro a{color:#c9b06a}
+.diag{background:var(--g-card);border:1px solid var(--g-line);border-left:3px solid #c9b06a;
+  padding:1rem 1.25rem;margin:1.4rem 0 2.4rem;max-width:44rem;font-size:.86rem;color:#c2c2bd}
+.diag b{color:var(--g-tx)}
+.diag ul{margin:.5rem 0 0;padding-left:1.1rem}
+.diag li{margin:.2rem 0}
+
+.gal{display:grid;gap:2.6rem;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));align-items:start}
+.demo{min-width:0}
+.demo-h{display:flex;align-items:baseline;gap:.6rem;margin-bottom:.15rem}
+.demo-n{font-family:var(--g-mono);font-size:.7rem;color:var(--g-dim)}
+.demo-h h2{margin:0;font-size:1.02rem}
+.demo>p{margin:.1rem 0 .5rem;font-size:.8rem;color:var(--g-dim);line-height:1.65}
+.ref{margin:0 0 .9rem;font-size:.74rem;color:#c9b06a;border-left:2px solid #c9b06a66;padding-left:.6rem;line-height:1.6}
+
+.frame{width:100%;max-width:375px;height:660px;overflow:hidden;border:9px solid #2a2a2a;border-radius:34px;
+  box-shadow:0 18px 50px #0009}
+.frame>.app{width:100%;height:100%;overflow-y:auto;scrollbar-width:none;position:relative}
+.frame>.app::-webkit-scrollbar{display:none}
+
+/* ============ 案19 預金通帳 ============ */
+.m19{background:#f3f0e7;color:#26303f;
+  font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;
+  background-image:repeating-linear-gradient(#f3f0e7 0 25px,#dcd7c8 25px 26px);
+  background-position:0 96px}
+.m19 .bk{padding:1.1rem 1rem .8rem;background:#f3f0e7;border-bottom:2px solid #26303f}
+.m19 .bk h1{margin:0;font-size:1.15rem;letter-spacing:.42em;font-weight:500}
+.m19 .bk .sub{font-family:ui-monospace,Consolas,monospace;font-size:.58rem;letter-spacing:.22em;color:#6d7684;margin-top:.2rem}
+.m19 .no{position:absolute;top:1rem;right:1rem;text-align:center;
+  border:1.5px solid #b4472f;color:#b4472f;border-radius:50%;width:44px;height:44px;
+  display:flex;align-items:center;justify-content:center;font-size:.62rem;letter-spacing:.05em;
+  transform:rotate(-11deg);opacity:.82;line-height:1.25}
+.m19 .hdr{display:grid;grid-template-columns:52px 1fr 68px 74px;gap:.3rem;padding:.35rem 1rem;
+  font-family:ui-monospace,Consolas,monospace;font-size:.53rem;color:#6d7684;letter-spacing:.02em;
+  border-bottom:1px solid #26303f}
+.m19 .ln{display:grid;grid-template-columns:52px 1fr 68px 74px;gap:.3rem;padding:0 1rem;
+  height:26px;align-items:center;font-family:ui-monospace,Consolas,monospace;font-size:.6rem;
+  color:#2e4468;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.m19 .ln .r{text-align:right}
+.m19 .ln .g{color:#b4472f}
+.m19 .ln .mono-jp{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:.68rem;color:#26303f}
+.m19 .carry{padding:0 1rem;height:26px;display:flex;align-items:center;justify-content:flex-end;
+  font-family:ui-monospace,Consolas,monospace;font-size:.6rem;color:#6d7684;letter-spacing:.14em}
+.m19 .foot{padding:.9rem 1rem 1.4rem;font-family:ui-monospace,Consolas,monospace;font-size:.55rem;
+  color:#6d7684;letter-spacing:.06em;line-height:2}
+
+/* ============ 案20 新聞の相場欄 ============ */
+.m20{background:#f7f5ee;color:#16150f;font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif}
+.m20 .app{padding:.85rem .8rem}
+.m20 .mast{border-bottom:3px double #16150f;padding-bottom:.4rem;margin-bottom:.5rem}
+.m20 .mast h1{margin:0;font-size:1.45rem;letter-spacing:.3em;font-weight:600}
+.m20 .mast .d{display:flex;justify-content:space-between;font-family:ui-monospace,Consolas,monospace;
+  font-size:.53rem;color:#5d594c;letter-spacing:.05em;margin-top:.25rem}
+.m20 .lead{font-size:1.15rem;letter-spacing:.14em;font-weight:600;margin:.7rem 0 .1rem;line-height:1.5}
+.m20 .lead .rd{color:#b3271f}
+.m20 .body{font-size:.7rem;line-height:1.85;text-align:justify;margin:.2rem 0 .7rem;color:#2a281e}
+.m20 .cols{column-count:2;column-gap:.7rem;column-rule:1px solid #cec9b8}
+.m20 .sect{font-size:.58rem;letter-spacing:.24em;border-top:1px solid #16150f;border-bottom:1px solid #16150f;
+  padding:.15rem 0;margin:.5rem 0 .3rem;break-inside:avoid}
+.m20 table{width:100%;border-collapse:collapse;font-family:ui-monospace,Consolas,monospace;
+  font-size:.56rem;font-variant-numeric:tabular-nums;break-inside:avoid}
+.m20 td{padding:.13rem 0;white-space:nowrap}
+.m20 td.r{text-align:right}
+.m20 .rd{color:#b3271f}
+.m20 .bl{color:#1e3a6b}
+.m20 .qt{border-left:2px solid #b3271f;padding-left:.5rem;font-size:.68rem;line-height:1.8;margin:.5rem 0;color:#3a372a}
+
+/* ============ 案21 電光掲示板 ============ */
+.m21{background:#000;color:#ffb000;font-family:ui-monospace,"Cascadia Mono",Consolas,monospace}
+.m21 .app{padding:0}
+.m21 .scan{position:absolute;inset:0;pointer-events:none;z-index:5;
+  background:repeating-linear-gradient(#0000 0 2px,#00000059 2px 3px)}
+.m21 .bar{background:#ffb000;color:#000;padding:.3rem .6rem;font-size:.6rem;letter-spacing:.22em;
+  display:flex;justify-content:space-between}
+.m21 .blk{padding:.7rem .6rem;border-bottom:1px solid #3a2a00}
+.m21 .lbl{font-size:.55rem;letter-spacing:.2em;color:#8a6200}
+.m21 .big{font-size:2.35rem;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums;
+  text-shadow:0 0 14px #ffb00066}
+.m21 .rw{display:flex;justify-content:space-between;font-size:.66rem;padding:.16rem 0;
+  font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.m21 .dn{color:#ff3b30}
+.m21 .up{color:#ffb000}
+.m21 .grid{display:grid;grid-template-columns:1fr auto auto;gap:.15rem .7rem;font-size:.62rem;
+  font-variant-numeric:tabular-nums}
+.m21 .cur::after{content:"█";animation:bl 1.05s steps(2) infinite;margin-left:.15em}
+@keyframes bl{50%{opacity:0}}
+.m21 .msg{padding:.7rem .6rem;font-size:.6rem;line-height:1.9;color:#c98a00;letter-spacing:.02em}
+
+/* ============ 案22 リソグラフ二色刷り ============ */
+.m22{background:#f4f1e8;color:#1b1a17;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+.m22 .app{padding:1.15rem 1rem}
+.m22 .kick{font-family:ui-monospace,Consolas,monospace;font-size:.55rem;letter-spacing:.2em;color:#2b4bff}
+.m22 .huge{font-size:4.1rem;font-weight:800;letter-spacing:-.06em;line-height:.86;margin:.25rem 0 0;
+  color:#ff2d7a;font-variant-numeric:tabular-nums;
+  text-shadow:2.5px 2.5px 0 #2b4bff80}
+.m22 .unit{font-size:1.1rem;font-weight:700;color:#2b4bff;letter-spacing:0}
+.m22 .say{font-size:.94rem;font-weight:700;line-height:1.7;margin:.9rem 0 0;max-width:15rem}
+.m22 .say em{font-style:normal;background:#ff2d7a;color:#f4f1e8;padding:0 .2em}
+.m22 .blockb{background:#2b4bff;color:#f4f1e8;padding:.75rem .85rem;margin:1.1rem 0 0;
+  transform:rotate(-.7deg)}
+.m22 .blockb .t{font-family:ui-monospace,Consolas,monospace;font-size:.55rem;letter-spacing:.18em;opacity:.85}
+.m22 .blockb .v{font-size:1.5rem;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.m22 .list{margin-top:1.2rem;border-top:3px solid #1b1a17;padding-top:.5rem}
+.m22 .li{display:flex;justify-content:space-between;font-family:ui-monospace,Consolas,monospace;
+  font-size:.7rem;padding:.3rem 0;border-bottom:1px solid #1b1a1733;font-variant-numeric:tabular-nums}
+.m22 .li .p{color:#2b4bff;font-weight:700}
+.m22 .li .m{color:#ff2d7a;font-weight:700}
+.m22 .dots{height:44px;margin-top:1rem;
+  background-image:radial-gradient(#ff2d7a 1.4px,transparent 1.5px),radial-gradient(#2b4bff 1.4px,transparent 1.5px);
+  background-size:7px 7px,7px 7px;background-position:0 0,3px 3px;opacity:.55}
+
+/* ============ 案23 Braun / 機能主義 ============ */
+.m23{background:#d5d3cd;color:#17171a;font-family:-apple-system,"Helvetica Neue","Hiragino Sans","Noto Sans JP",sans-serif}
+.m23 .app{padding:1.3rem 1.1rem}
+.m23 .brand{display:flex;justify-content:space-between;align-items:baseline;
+  font-size:.55rem;letter-spacing:.12em;color:#5c5c5e;font-weight:600}
+.m23 .plate{background:#c9c7c1;margin-top:.9rem;padding:1rem .95rem;border-top:1px solid #e6e4de;border-bottom:1px solid #b4b2ac}
+.m23 .cap{font-size:.54rem;letter-spacing:.1em;color:#5c5c5e;font-weight:600}
+.m23 .num{font-size:2.7rem;font-weight:600;letter-spacing:-.045em;line-height:1;margin-top:.15rem;
+  font-variant-numeric:tabular-nums}
+.m23 .or{color:#e8590c}
+.m23 .scale{margin-top:.9rem}
+.m23 .ticks{display:flex;gap:2px;height:20px;align-items:flex-end}
+.m23 .ticks i{flex:1;background:#8e8c87;height:7px}
+.m23 .ticks i.m{height:14px}
+.m23 .ticks i.on{background:#e8590c;height:20px}
+.m23 .sc-l{display:flex;justify-content:space-between;font-size:.5rem;color:#5c5c5e;margin-top:.3rem;
+  font-variant-numeric:tabular-nums;font-weight:600}
+.m23 .grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#b4b2ac;margin-top:1.1rem}
+.m23 .cell{background:#d5d3cd;padding:.6rem .7rem}
+.m23 .cell .k{font-size:.5rem;letter-spacing:.1em;color:#5c5c5e;font-weight:600}
+.m23 .cell .v{font-size:1rem;font-weight:600;font-variant-numeric:tabular-nums;margin-top:.1rem}
+.m23 .rowl{display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #bab8b2;
+  font-size:.76rem;font-variant-numeric:tabular-nums}
+.m23 .rowl .t{font-weight:600}
+.m23 .sect{font-size:.5rem;letter-spacing:.14em;color:#5c5c5e;font-weight:600;margin:1.2rem 0 .3rem}
+
+@media(max-width:700px){.gal{grid-template-columns:1fr}.frame{height:620px;margin-inline:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="intro">
+  <h1>デザイン案 19〜23</h1>
+  <p>実在する印刷物・機械を参照元にした5案。
+     <a href="mockups.html">案1〜7</a> ／ <a href="mockups2.html">案8〜12</a> ／ <a href="mockups3.html">案13〜18</a></p>
+</div>
+
+<div class="diag">
+  <b>前の案が「AIが作った感」になっていた原因。</b>
+  参照元が実在しないまま、今どきのUIの部品を組み合わせていたからだと思います。具体的には:
+  <ul>
+    <li>背景にぼかした光のグラデーション（オーロラ）</li>
+    <li>半透明のガラスカード、角丸16〜22px、柔らかい影</li>
+    <li>ミント緑 × 濃紺、コーラルレッド</li>
+    <li><span style="font-family:var(--g-mono);font-size:.8em;letter-spacing:.2em">LETTER · SPACED</span> の極小大文字ラベル</li>
+    <li>何でもカードに入れる／全部が等間隔で歪みがない</li>
+  </ul>
+  <br>
+  以下は<b>実在する紙や機械を参照元にした</b>5案です。上のリストの要素は一つも使っていません。
+</div>
+
+<div class="gal" id="gal"></div>
+
+</div>
+
+<script>
+const DESIGNS = [
+
+["預金通帳",
+ "銀行の通帳そのもの。横罫に印字が乗り、右端に残高が積み上がる。売買は「摘要」、却下は取り消し線。1年後に繰り越す前提の帳簿。",
+ "参照元: 日本の預金通帳（罫線・ドットインパクト印字・繰越・朱の検印）",
+`<div class="no">検<br>済</div>
+ <div class="bk"><h1>仮想運用帳</h1><div class="sub">US BOOK / NO.0001</div></div>
+ <div class="hdr"><span>年月日</span><span>摘要</span><span class="r">増減</span><span class="r">差引残高</span></div>
+ <div class="ln"><span>08-06</span><span class="mono-jp">買 LLY 3株</span><span class="r">-3,492</span><span class="r">46,508</span></div>
+ <div class="ln"><span>08-06</span><span class="mono-jp">評価損益</span><span class="r g">+7</span><span class="r">50,002</span></div>
+ <div class="ln"><span>08-05</span><span class="mono-jp">売買なし</span><span class="r">—</span><span class="r">49,995</span></div>
+ <div class="ln"><span>08-05</span><span class="mono-jp" style="text-decoration:line-through;opacity:.5">却下 6861.T</span><span class="r">—</span><span class="r">49,995</span></div>
+ <div class="ln"><span>08-04</span><span class="mono-jp">売 AMD 8株</span><span class="r g">+1,284</span><span class="r">49,995</span></div>
+ <div class="ln"><span>08-04</span><span class="mono-jp">評価損益</span><span class="r">-311</span><span class="r">48,711</span></div>
+ <div class="ln"><span>08-01</span><span class="mono-jp">買 AMD 8株</span><span class="r">-1,240</span><span class="r">49,022</span></div>
+ <div class="carry">＊＊＊ 繰 越 ＊＊＊</div>
+ <div class="ln"><span>08-01</span><span class="mono-jp">お預り</span><span class="r">50,000</span><span class="r">50,000</span></div>
+ <div class="foot">
+   ベンチマーク SPY 比 ＋0.56<br>
+   経過 22 / 250 営業日<br>
+   ＊この帳簿の金銭はすべて架空のものです
+ </div>`],
+
+["新聞の株式相場欄",
+ "見出しが判断、本文が理由、下に相場表。読み物と数表が同じ紙面に同居する。二色刷りで、上げだけが朱で刷られる。",
+ "参照元: 日刊紙の市況面（明朝の縦見出し・段組・細かい相場表・二色刷り）",
+`<div class="mast">
+   <h1>運用日報</h1>
+   <div class="d"><span>第 22 号</span><span>2026年8月6日（木）</span><span>米国株ブック</span></div>
+ </div>
+ <div class="lead">上方修正に反応薄　<span class="rd">LLY 買い</span></div>
+ <div class="body">通期ガイダンスを三十億ドル引き上げたにもかかわらず、株価の反応は四％程度にとどまった。
+   織り込み不足と判断し三株を取得。前提はGLP-1需要の構造的拡大が続くこと。次回本決算で
+   成長が明確に鈍化した場合は誤りと認める。</div>
+ <div class="sect">保 有 銘 柄</div>
+ <div class="cols">
+   <table>
+     <tr><td>LLY</td><td class="r">3</td><td class="r">3,494</td><td class="r rd">+0.3</td></tr>
+     <tr><td>NVDA</td><td class="r">12</td><td class="r">2,180</td><td class="r bl">-1.2</td></tr>
+     <tr><td>V</td><td class="r">9</td><td class="r">2,910</td><td class="r rd">+1.8</td></tr>
+     <tr><td>XOM</td><td class="r">18</td><td class="r">1,944</td><td class="r bl">-0.4</td></tr>
+     <tr><td>現金</td><td class="r"></td><td class="r">12,480</td><td class="r"></td></tr>
+   </table>
+   <div class="sect">対 ベ ン チ</div>
+   <table>
+     <tr><td>自 己</td><td class="r rd">+2.48</td></tr>
+     <tr><td>SPY</td><td class="r">+1.92</td></tr>
+     <tr><td>差</td><td class="r rd">+0.56</td></tr>
+     <tr><td>経 過</td><td class="r">22/250</td></tr>
+   </table>
+ </div>
+ <div class="sect">前 日 の 反 省</div>
+ <div class="qt">「織り込み済み」と書いたが、何を見てそう判断したかを記していない。
+   後から検証できない書き方だった。</div>`],
+
+["場立ちの電光掲示板",
+ "黒地に琥珀。装飾は一切なく、走査線と点滅カーソルだけがある。読ませるためでなく、掲示するための画面。",
+ "参照元: 取引所の株価表示板 / Bloomberg ターミナル（琥珀色の単色CRT）",
+`<div class="scan"></div>
+ <div class="bar"><span>US BOOK</span><span>08-06 01:13 JST</span></div>
+ <div class="blk">
+   <div class="lbl">VS SPY</div>
+   <div class="big">+0.56</div>
+   <div class="rw"><span>SELF</span><span>+2.48%</span></div>
+   <div class="rw"><span>BENCH</span><span>+1.92%</span></div>
+ </div>
+ <div class="blk">
+   <div class="lbl">EQUITY</div>
+   <div class="big" style="font-size:1.75rem">$51,240</div>
+   <div class="rw"><span>CASH</span><span>24.4%</span></div>
+   <div class="rw"><span>BUYS TODAY</span><span>1 / 4</span></div>
+ </div>
+ <div class="blk">
+   <div class="lbl">POSITIONS</div>
+   <div class="grid" style="margin-top:.35rem">
+     <span>LLY</span><span>3,494</span><span class="up">+0.3</span>
+     <span>NVDA</span><span>2,180</span><span class="dn">-1.2</span>
+     <span>V</span><span>2,910</span><span class="up">+1.8</span>
+     <span>XOM</span><span>1,944</span><span class="dn">-0.4</span>
+   </div>
+ </div>
+ <div class="blk">
+   <div class="lbl">LAST ORDER</div>
+   <div class="rw" style="margin-top:.3rem"><span>BUY LLY 3 @1163.89</span><span>FILLED</span></div>
+   <div class="msg">GUIDANCE RAISED 82-85B TO 85-87B.<br>PRICE REACTION ONLY +4%.<br>JUDGED UNDERPRICED.</div>
+ </div>
+ <div class="blk" style="border:0">
+   <div class="lbl cur">NEXT SESSION 14:45 JP-CLOSE</div>
+ </div>`],
+
+["リソグラフ二色刷り",
+ "蛍光ピンクと青の二版刷り。版がわずかにずれ、網点が粗い。数字を巨大に置いて、あとは詰める。ZINEやポスターの作り方。",
+ "参照元: リソグラフ印刷（二色・版ズレ・粗い網点・蛍光インク）",
+`<div class="kick">VS SPY / DAY 22 OF 250</div>
+ <div class="huge">+0.56<span class="unit">pt</span></div>
+ <p class="say">市場は上げた。<br><em>あなたは少しだけ上回った。</em></p>
+ <div class="blockb">
+   <div class="t">US BOOK EQUITY</div>
+   <div class="v">$51,240</div>
+ </div>
+ <div class="list">
+   <div class="li"><span>LLY　3</span><span class="p">+0.3%</span></div>
+   <div class="li"><span>NVDA　12</span><span class="m">−1.2%</span></div>
+   <div class="li"><span>V　9</span><span class="p">+1.8%</span></div>
+   <div class="li"><span>CASH</span><span>24.4%</span></div>
+ </div>
+ <div class="dots"></div>`],
+
+["機能主義（ブラウン式）",
+ "灰色の面に黒、差し色はオレンジ一色だけ。角丸なし、影なし、装飾なし。目盛りと刻みで量を示す、計測機器の作法。",
+ "参照元: Dieter Rams / Braun の計器類（灰色地・単色アクセント・物理的な目盛り）",
+`<div class="brand"><span>VIRTUAL PORTFOLIO</span><span>US · 08.06</span></div>
+ <div class="plate">
+   <div class="cap">DIFFERENCE VS SPY</div>
+   <div class="num or">+0.56</div>
+   <div class="scale">
+     <div class="ticks">
+       <i></i><i class="m"></i><i></i><i></i><i class="m"></i><i></i><i></i><i class="m"></i>
+       <i></i><i></i><i class="m"></i><i class="on"></i><i></i><i></i><i class="m"></i><i></i>
+       <i></i><i class="m"></i><i></i><i></i>
+     </div>
+     <div class="sc-l"><span>−2</span><span>0</span><span>+2</span></div>
+   </div>
+ </div>
+ <div class="grid">
+   <div class="cell"><div class="k">EQUITY</div><div class="v">$51,240</div></div>
+   <div class="cell"><div class="k">RETURN</div><div class="v">+2.48%</div></div>
+   <div class="cell"><div class="k">BENCH</div><div class="v">+1.92%</div></div>
+   <div class="cell"><div class="k">CASH</div><div class="v">24.4%</div></div>
+ </div>
+ <div class="sect">POSITIONS</div>
+ <div class="rowl"><span class="t">LLY</span><span>3　$3,494　<span class="or">+0.3%</span></span></div>
+ <div class="rowl"><span class="t">NVDA</span><span>12　$2,180　−1.2%</span></div>
+ <div class="rowl"><span class="t">V</span><span>9　$2,910　<span class="or">+1.8%</span></span></div>
+ <div class="rowl"><span class="t">XOM</span><span>18　$1,944　−0.4%</span></div>
+ <div class="sect">SESSION</div>
+ <div class="rowl"><span>BUYS TODAY</span><span>1 / 4</span></div>
+ <div class="rowl"><span>DAY</span><span>22 / 250</span></div>`],
+];
+
+document.getElementById("gal").innerHTML = DESIGNS.map((d,i) => `
+  <section class="demo">
+    <div class="demo-h"><span class="demo-n">案${i+19}</span><h2>${d[0]}</h2></div>
+    <p>${d[1]}</p>
+    <p class="ref">${d[2]}</p>
+    <div class="frame m${i+19}"><div class="app">${d[3]}</div></div>
+  </section>`).join("");
+</script>
+</body>
+</html>

@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>デザイン案 24〜29（既存アプリを参照）— 仮想運用記録</title>
+<meta name="color-scheme" content="dark">
+<style>
+:root{
+  --g-bg:#141414;--g-card:#1c1c1c;--g-line:#2c2c2c;--g-tx:#e9e9e6;--g-dim:#8d8d87;
+  --g-sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic UI","Noto Sans JP",sans-serif;
+  --g-mono:ui-monospace,SFMono-Regular,"SF Mono","Cascadia Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:0 1rem 4rem;background:var(--g-bg);color:var(--g-tx);font-family:var(--g-sans);line-height:1.75}
+.wrap{max-width:78rem;margin-inline:auto}
+.intro{padding:2.5rem 0 1rem;max-width:44rem}
+.intro h1{margin:0 0 .6rem;font-size:1.5rem}
+.intro p{margin:.6rem 0;color:var(--g-dim);font-size:.9rem}
+.intro a{color:#8fa6ff}
+.note{background:var(--g-card);border:1px solid var(--g-line);border-left:3px solid #8fa6ff;
+  padding:1rem 1.25rem;margin:1.4rem 0 2.4rem;max-width:44rem;font-size:.85rem;color:#c2c2bd}
+.note b{color:var(--g-tx)}
+
+.gal{display:grid;gap:2.6rem;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));align-items:start}
+.demo{min-width:0}
+.demo-h{display:flex;align-items:baseline;gap:.6rem;margin-bottom:.15rem}
+.demo-n{font-family:var(--g-mono);font-size:.7rem;color:var(--g-dim)}
+.demo-h h2{margin:0;font-size:1.02rem}
+.demo>p{margin:.1rem 0 .5rem;font-size:.8rem;color:var(--g-dim);line-height:1.65}
+.ref{margin:0 0 .9rem;font-size:.74rem;color:#8fa6ff;border-left:2px solid #8fa6ff55;padding-left:.6rem;line-height:1.6}
+
+.frame{width:100%;max-width:375px;height:660px;overflow:hidden;border:9px solid #2a2a2a;border-radius:34px;
+  box-shadow:0 18px 50px #0009}
+.frame>.app{width:100%;height:100%;overflow-y:auto;scrollbar-width:none;position:relative}
+.frame>.app::-webkit-scrollbar{display:none}
+svg{display:block;max-width:100%}
+path{fill:none;stroke-linejoin:round;stroke-linecap:round}
+
+/* ============ 案24 Linear 参照 ============ */
+.m24{background:#010102;color:#f7f8f8;letter-spacing:-.022em;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif}
+.m24 .app{padding:0}
+.m24 .tb{display:flex;align-items:center;gap:.5rem;padding:.7rem .85rem;border-bottom:1px solid #1c1d21}
+.m24 .tb .dot{width:16px;height:16px;border-radius:5px;background:#5e6ad2}
+.m24 .tb .t{font-size:.78rem;font-weight:510}
+.m24 .tb .c{margin-left:auto;font-size:.62rem;color:#62666d;background:#0f1011;border:1px solid #1c1d21;
+  border-radius:5px;padding:.1rem .35rem}
+.m24 .panel{margin:.85rem;background:#0f1011;border:1px solid #1c1d21;border-radius:12px;padding:.9rem}
+.m24 .k{font-size:.62rem;color:#62666d;font-weight:450}
+.m24 .n{font-size:1.85rem;font-weight:510;letter-spacing:-.032em;margin-top:.1rem;font-variant-numeric:tabular-nums}
+.m24 .sub{font-size:.68rem;color:#8a8f98;margin-top:.15rem}
+.m24 .vio{color:#7170ff}
+.m24 .grn{color:#4cb782}.m24 .red{color:#eb5757}
+.m24 .sect{font-size:.62rem;color:#62666d;padding:.25rem .95rem;font-weight:450}
+.m24 .row{display:flex;align-items:center;gap:.55rem;padding:.5rem .95rem;border-top:1px solid #141516;font-size:.72rem}
+.m24 .row:hover{background:#141516}
+.m24 .id{font-size:.6rem;color:#4a4e56;width:34px;flex:none}
+.m24 .st{width:11px;height:11px;border-radius:50%;border:1.5px solid #4cb782;flex:none}
+.m24 .st.x{border-color:#3d4046}
+.m24 .st.s{border-color:#eb5757}
+.m24 .ti{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#e6e6e6}
+.m24 .tag{font-size:.58rem;color:#8a8f98;background:#0f1011;border:1px solid #1c1d21;border-radius:4px;padding:.05rem .3rem}
+.m24 .when{font-size:.6rem;color:#4a4e56;flex:none}
+
+/* ============ 案25 Robinhood 参照 ============ */
+.m25{background:#000;color:#fff;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+.m25 .app{padding:1.4rem 0 0}
+.m25 .top{padding:0 1.15rem}
+.m25 .n{font-size:2.55rem;font-weight:600;letter-spacing:-.035em;font-variant-numeric:tabular-nums;line-height:1.05}
+.m25 .d{font-size:.86rem;color:#00c805;margin-top:.2rem;font-variant-numeric:tabular-nums}
+.m25 .d .g{color:#8b8f95}
+.m25 .chart{margin:1.5rem 0 0}
+.m25 .chart path.a{stroke:#00c805;stroke-width:2}
+.m25 .chart path.b{stroke:#2f3237;stroke-width:1.4;stroke-dasharray:4 4}
+.m25 .ranges{display:flex;gap:1.35rem;padding:.9rem 1.15rem 0;font-size:.74rem;color:#8b8f95}
+.m25 .ranges b{color:#00c805;font-weight:600;position:relative}
+.m25 .ranges b::after{content:"";position:absolute;left:-2px;right:-2px;bottom:-5px;height:2px;background:#00c805}
+.m25 .hr{height:1px;background:#1c1f23;margin:1.3rem 1.15rem 0}
+.m25 .sec{padding:1.1rem 1.15rem .3rem;font-size:.68rem;color:#8b8f95;letter-spacing:.02em}
+.m25 .li{display:flex;align-items:center;justify-content:space-between;padding:.65rem 1.15rem}
+.m25 .li .l .t{font-size:.95rem;font-weight:500}
+.m25 .li .l .s{font-size:.68rem;color:#8b8f95}
+.m25 .li .r{text-align:right;font-variant-numeric:tabular-nums}
+.m25 .li .r .v{font-size:.9rem}
+.m25 .li .r .p{font-size:.7rem;color:#00c805}
+.m25 .li .r .p.dn{color:#ff5000}
+.m25 .mini{width:52px;height:20px}
+.m25 .mini path{stroke:#00c805;stroke-width:1.6}
+.m25 .mini.dn path{stroke:#ff5000}
+
+/* ============ 案26 Are.na 参照 ============ */
+.m26{background:#fff;color:#000;font-family:-apple-system,"Helvetica Neue","Hiragino Sans","Noto Sans JP",sans-serif}
+.m26 .app{padding:1.5rem 1.15rem}
+.m26 .h{display:flex;justify-content:space-between;align-items:baseline;font-size:.68rem;
+  font-family:ui-monospace,Consolas,monospace;color:#000}
+.m26 .h .c{color:#8a8a8a}
+.m26 .title{font-size:1.05rem;font-weight:400;margin:1.6rem 0 .1rem}
+.m26 .meta{font-family:ui-monospace,Consolas,monospace;font-size:.62rem;color:#8a8a8a}
+.m26 .stat{margin:2rem 0 2.2rem;display:flex;gap:2rem}
+.m26 .stat div .k{font-family:ui-monospace,Consolas,monospace;font-size:.58rem;color:#8a8a8a}
+.m26 .stat div .v{font-size:1.25rem;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.m26 .idx{border-top:1px solid #000;padding-top:.15rem}
+.m26 .e{display:grid;grid-template-columns:22px 1fr auto;gap:.6rem;padding:.65rem 0;border-bottom:1px solid #e4e4e4;
+  align-items:baseline}
+.m26 .e .num{font-family:ui-monospace,Consolas,monospace;font-size:.6rem;color:#b4b4b4}
+.m26 .e .t{font-size:.8rem;line-height:1.55}
+.m26 .e .t small{display:block;color:#8a8a8a;font-size:.68rem;margin-top:.15rem}
+.m26 .e .d{font-family:ui-monospace,Consolas,monospace;font-size:.58rem;color:#b4b4b4;white-space:nowrap}
+.m26 .foot{margin-top:1.8rem;font-family:ui-monospace,Consolas,monospace;font-size:.58rem;color:#b4b4b4;line-height:1.9}
+
+/* ============ 案27 GitHub 参照 ============ */
+.m27{background:#0d1117;color:#e6edf3;font-family:-apple-system,"Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif}
+.m27 .app{padding:.9rem}
+.m27 .repo{display:flex;align-items:center;gap:.4rem;font-size:.86rem}
+.m27 .repo .o{color:#8b949e}
+.m27 .repo b{font-weight:600;color:#4493f8}
+.m27 .badge{font-size:.58rem;border:1px solid #30363d;border-radius:999px;padding:.05rem .45rem;color:#8b949e}
+.m27 .box{border:1px solid #30363d;border-radius:6px;margin-top:.85rem}
+.m27 .box .hd{background:#161b22;border-bottom:1px solid #30363d;padding:.45rem .7rem;font-size:.7rem;color:#8b949e;
+  border-radius:6px 6px 0 0}
+.m27 .box .bd{padding:.7rem}
+.m27 .grid{display:grid;grid-template-columns:repeat(26,1fr);gap:2px}
+.m27 .grid i{aspect-ratio:1;border-radius:2px;background:#151b23}
+.m27 .lg{display:flex;align-items:center;gap:.25rem;justify-content:flex-end;margin-top:.45rem;
+  font-size:.55rem;color:#8b949e}
+.m27 .lg i{width:9px;height:9px;border-radius:2px}
+.m27 .cm{display:flex;gap:.55rem;padding:.55rem .7rem;border-top:1px solid #21262d;font-size:.72rem}
+.m27 .cm:first-child{border-top:0}
+.m27 .cm .av{width:18px;height:18px;border-radius:50%;background:#30363d;flex:none;margin-top:.15rem}
+.m27 .cm .m{flex:1;min-width:0}
+.m27 .cm .m .t{color:#e6edf3;line-height:1.45}
+.m27 .cm .m .s{font-size:.62rem;color:#8b949e;margin-top:.15rem}
+.m27 .sha{font-family:ui-monospace,Consolas,monospace;font-size:.62rem;color:#8b949e;flex:none}
+.m27 .lab{display:inline-block;font-size:.56rem;border-radius:999px;padding:.02rem .4rem;margin-right:.25rem}
+.m27 .lab.b{background:#1f6feb26;color:#4493f8;border:1px solid #1f6feb4d}
+.m27 .lab.r{background:#f8514926;color:#f85149;border:1px solid #f851494d}
+.m27 .lab.g{background:#3fb95026;color:#3fb950;border:1px solid #3fb9504d}
+.m27 .kv{display:flex;justify-content:space-between;font-size:.72rem;padding:.25rem 0;color:#8b949e}
+.m27 .kv b{color:#e6edf3;font-variant-numeric:tabular-nums}
+
+/* ============ 案28 Vercel / Geist 参照 ============ */
+.m28{background:#000;color:#fff;font-family:-apple-system,"Helvetica Neue","Hiragino Sans","Noto Sans JP",sans-serif}
+.m28 .app{padding:0}
+.m28 .nav{display:flex;align-items:center;gap:.5rem;padding:.85rem .95rem;border-bottom:1px solid #1f1f1f}
+.m28 .tri{width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:12px solid #fff}
+.m28 .nav .t{font-size:.78rem;font-weight:500;letter-spacing:-.01em}
+.m28 .nav .s{margin-left:auto;font-size:.58rem;font-family:ui-monospace,Consolas,monospace;color:#a1a1a1;
+  border:1px solid #1f1f1f;border-radius:999px;padding:.1rem .5rem}
+.m28 .hero{padding:1.5rem .95rem 1.2rem;border-bottom:1px solid #1f1f1f}
+.m28 .lbl{font-family:ui-monospace,Consolas,monospace;font-size:.56rem;letter-spacing:.1em;color:#a1a1a1;
+  text-transform:uppercase}
+.m28 .big{font-size:3.1rem;font-weight:600;letter-spacing:-.055em;line-height:1;margin-top:.35rem;
+  font-variant-numeric:tabular-nums}
+.m28 .cells{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #1f1f1f}
+.m28 .cell{padding:.85rem .95rem}
+.m28 .cell+.cell{border-left:1px solid #1f1f1f}
+.m28 .cell .v{font-size:1.15rem;font-weight:500;letter-spacing:-.02em;margin-top:.2rem;font-variant-numeric:tabular-nums}
+.m28 .chart{padding:1rem .95rem;border-bottom:1px solid #1f1f1f}
+.m28 .chart path.a{stroke:#fff;stroke-width:1.6}
+.m28 .chart path.b{stroke:#3a3a3a;stroke-width:1.2;stroke-dasharray:3 3}
+.m28 .lst{padding:.2rem 0}
+.m28 .li{display:flex;align-items:center;gap:.6rem;padding:.62rem .95rem;border-bottom:1px solid #141414;
+  font-size:.74rem}
+.m28 .li .sq{width:7px;height:7px;background:#fff;flex:none}
+.m28 .li .sq.o{background:#333}
+.m28 .li .n{flex:1;font-family:ui-monospace,Consolas,monospace;letter-spacing:-.01em}
+.m28 .li .p{font-family:ui-monospace,Consolas,monospace;color:#a1a1a1;font-variant-numeric:tabular-nums}
+
+/* ============ 案29 Notion 参照 ============ */
+.m29{background:#fff;color:#37352f;font-family:-apple-system,"Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif}
+.m29 .app{padding:1.5rem 1.2rem}
+.m29 .crumb{font-size:.68rem;color:#9b9a97}
+.m29 h1{font-size:1.6rem;font-weight:700;letter-spacing:-.02em;margin:.7rem 0 .1rem;line-height:1.25}
+.m29 .props{margin:.9rem 0 1.4rem}
+.m29 .prop{display:grid;grid-template-columns:88px 1fr;font-size:.76rem;padding:.22rem 0;align-items:center}
+.m29 .prop .k{color:#9b9a97}
+.m29 .prop .v{font-variant-numeric:tabular-nums}
+.m29 .pill{display:inline-block;font-size:.68rem;border-radius:3px;padding:.05rem .4rem}
+.m29 .pill.g{background:#dbeddb;color:#1c3829}
+.m29 .pill.r{background:#ffe2dd;color:#5d1715}
+.m29 .pill.y{background:#fdecc8;color:#402c1b}
+.m29 .callout{display:flex;gap:.6rem;background:#f7f6f3;border-radius:4px;padding:.75rem .8rem;margin:1rem 0}
+.m29 .callout .i{font-size:1rem;line-height:1.3}
+.m29 .callout .t{font-size:.78rem;line-height:1.6}
+.m29 h2{font-size:1rem;font-weight:600;margin:1.6rem 0 .3rem}
+.m29 .divider{height:1px;background:#e9e9e7;margin:1.1rem 0}
+.m29 table{width:100%;border-collapse:collapse;font-size:.72rem}
+.m29 th{text-align:left;font-weight:500;color:#9b9a97;border-bottom:1px solid #e9e9e7;padding:.3rem .35rem;font-size:.66rem}
+.m29 td{padding:.42rem .35rem;border-bottom:1px solid #f1f1ef;font-variant-numeric:tabular-nums}
+.m29 td.r,.m29 th.r{text-align:right}
+.m29 .tog{display:flex;gap:.4rem;font-size:.78rem;color:#37352f;padding:.3rem 0;align-items:baseline}
+.m29 .tog .a{color:#9b9a97;font-size:.6rem}
+.m29 .bul{font-size:.78rem;line-height:1.75;padding-left:1.1rem;margin:.3rem 0}
+
+@media(max-width:700px){.gal{grid-template-columns:1fr}.frame{height:620px;margin-inline:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="intro">
+  <h1>デザイン案 24〜29</h1>
+  <p>実在するウェブアプリの設計言語を参照した6案。
+     <a href="mockups.html">1〜7</a> ／ <a href="mockups2.html">8〜12</a> ／
+     <a href="mockups3.html">13〜18</a> ／ <a href="mockups4.html">19〜23</a></p>
+</div>
+
+<div class="note">
+  <b>やり方について。</b> 各アプリの実際の配色・字送り・余白・部品の作法を調べたうえで、
+  それを<b>この運用記録の中身に当てはめ直しています</b>。ロゴや素材は使っていません。
+  「Linear の作法で運用記録を作ったらどうなるか」という翻案です。
+</div>
+
+<div class="gal" id="gal"></div>
+
+</div>
+
+<script>
+const MINE  = [46,44,48,40,43,36,38,30,33,26,28,20,24,16,18,12,14,8,10,5];
+const BENCH = [48,47,49,45,46,43,44,41,42,38,39,36,37,34,35,32,33,30,31,28];
+const P = a => a.map((y,i) => (i?"L":"M") + i*14 + " " + y).join(" ");
+const CHART = (h=90) => `<svg viewBox="0 0 266 56" preserveAspectRatio="none" style="width:100%;height:${h}px">
+  <path class="b" d="${P(BENCH)}"/><path class="a" d="${P(MINE)}"/></svg>`;
+const MINI = (dn) => `<svg class="mini ${dn?"dn":""}" viewBox="0 0 266 56" preserveAspectRatio="none">
+  <path d="${P(dn?MINE.slice().reverse():MINE)}"/></svg>`;
+
+function ghGrid(){
+  let o="",s=11;const r=()=>(s=(s*9301+49297)%233280)/233280;
+  for(let i=0;i<130;i++){
+    if(i>22){o+="<i></i>";continue}
+    const v=r();
+    const c=v<.3?"#151b23":v<.5?"#033a16":v<.7?"#196c2e":v<.88?"#2ea043":"#56d364";
+    o+=`<i style="background:${c}"></i>`;
+  }
+  return o;
+}
+
+const DESIGNS = [
+
+["Linear の作法で",
+ "ほぼ黒の地に、4段階だけの面の明るさと0.5pxの罫線で構造を作る。文字は細め、字送りは詰め、色は紫のアクセント1色だけ。売買記録をイシュー一覧のように扱う。",
+ "参照: Linear（#010102 地 / #5e6ad2 のアクセント / Inter系・字送り -0.022em / 6・12pxの角丸 / ホバーで面が持ち上がる）",
+`<div class="tb"><span class="dot"></span><span class="t">仮想運用記録</span><span class="c">US · 22日目</span></div>
+ <div class="panel">
+   <div class="k">SPY との差</div>
+   <div class="n vio">+0.56pt</div>
+   <div class="sub">自分 <span class="grn">+2.48%</span> ／ ベンチ +1.92%</div>
+ </div>
+ <div class="panel" style="display:flex;gap:1.4rem">
+   <div><div class="k">総資産</div><div class="n" style="font-size:1.05rem">$51,240</div></div>
+   <div><div class="k">現金</div><div class="n" style="font-size:1.05rem">24.4%</div></div>
+   <div><div class="k">買い枠</div><div class="n" style="font-size:1.05rem">1/4</div></div>
+ </div>
+ <div class="sect">判断ログ</div>
+ <div class="row"><span class="id">L-14</span><span class="st"></span><span class="ti">買い LLY 3株 — 織り込み不足</span><span class="tag">US</span><span class="when">1h</span></div>
+ <div class="row"><span class="id">L-13</span><span class="st x"></span><span class="ti">売買なし — 前提は崩れていない</span><span class="tag">JP</span><span class="when">11h</span></div>
+ <div class="row"><span class="id">L-12</span><span class="st s"></span><span class="ti">却下 6861.T — 上限25%超過</span><span class="tag">JP</span><span class="when">16h</span></div>
+ <div class="row"><span class="id">L-11</span><span class="st"></span><span class="ti">売り AMD 8株 — 利益率の前提が崩れた</span><span class="tag">US</span><span class="when">2d</span></div>
+ <div class="row"><span class="id">L-10</span><span class="st x"></span><span class="ti">売買なし — 決算待ち</span><span class="tag">US</span><span class="when">2d</span></div>
+ <div class="row"><span class="id">L-09</span><span class="st"></span><span class="ti">買い V 9株 — 決済高の伸びが継続</span><span class="tag">US</span><span class="when">3d</span></div>`],
+
+["Robinhood の作法で",
+ "純黒に緑一色。枠線も箱もほとんど無く、画面いっぱいのチャートと巨大な数字だけで構成する。期間切替が唯一の操作要素。",
+ "参照: Robinhood（純黒地 / Robinhood Green #00C805 / 箱と罫線を極力使わない / 全幅チャート / 3〜4色しか使わない）",
+`<div class="top">
+   <div class="n">$51,240</div>
+   <div class="d">+$1,240 (+2.48%) <span class="g">· SPY +1.92%</span></div>
+ </div>
+ <div class="chart">${CHART(120)}</div>
+ <div class="ranges"><b>1D</b><span>1W</span><span>1M</span><span>3M</span><span>1Y</span><span>ALL</span></div>
+ <div class="hr"></div>
+ <div class="sec">保有</div>
+ <div class="li"><div class="l"><div class="t">LLY</div><div class="s">3株</div></div>
+   ${MINI(0)}<div class="r"><div class="v">$3,494</div><div class="p">+0.3%</div></div></div>
+ <div class="li"><div class="l"><div class="t">NVDA</div><div class="s">12株</div></div>
+   ${MINI(1)}<div class="r"><div class="v">$2,180</div><div class="p dn">−1.2%</div></div></div>
+ <div class="li"><div class="l"><div class="t">V</div><div class="s">9株</div></div>
+   ${MINI(0)}<div class="r"><div class="v">$2,910</div><div class="p">+1.8%</div></div></div>
+ <div class="hr"></div>
+ <div class="sec">直近の判断</div>
+ <div class="li"><div class="l"><div class="t" style="font-size:.82rem;font-weight:400;line-height:1.5">
+   上方修正の規模に対し株価反応が控えめ。<br>織り込み不足と判断した。</div>
+   <div class="s" style="margin-top:.3rem">08-06 01:13 · 買い LLY</div></div></div>`],
+
+["Are.na の作法で",
+ "白地に黒だけ。色を一切使わず、等幅の小さな番号と細い罫線で索引にする。装飾ゼロで、集めたものを淡々と並べる思想。",
+ "参照: Are.na（白地・黒文字のみ / 等幅の小さなメタ情報 / 罫線一本の索引 / 色をアクセントに使わない）",
+`<div class="h"><span>katsudon1cho / kabusim</span><span class="c">22</span></div>
+ <div class="title">仮想運用記録</div>
+ <div class="meta">Started 2026-08-06 · 250 sessions planned</div>
+ <div class="stat">
+   <div><div class="k">VS SPY</div><div class="v">+0.56</div></div>
+   <div><div class="k">VS 1306</div><div class="v">−0.46</div></div>
+   <div><div class="k">CASH</div><div class="v">24.4%</div></div>
+ </div>
+ <div class="idx">
+   <div class="e"><span class="num">14</span>
+     <span class="t">買い LLY 3株<small>上方修正の規模に対し株価反応が控えめ。織り込み不足と判断。</small></span>
+     <span class="d">08.06</span></div>
+   <div class="e"><span class="num">13</span>
+     <span class="t">売買なし<small>前場の下げは指数連動。個別の材料ではない。</small></span>
+     <span class="d">08.05</span></div>
+   <div class="e"><span class="num">12</span>
+     <span class="t">却下 6861.T<small>1銘柄上限25%を超過。単元が大きすぎる。</small></span>
+     <span class="d">08.05</span></div>
+   <div class="e"><span class="num">11</span>
+     <span class="t">売り AMD 8株<small>利益率の見通しが崩れ、買った前提が成立しなくなった。</small></span>
+     <span class="d">08.04</span></div>
+   <div class="e"><span class="num">10</span>
+     <span class="t">売買なし<small>決算を待つほうが確度が高い。</small></span>
+     <span class="d">08.04</span></div>
+ </div>
+ <div class="foot">US $51,240 · +2.48%<br>JP ¥20,310,000 · +1.55%</div>`],
+
+["GitHub の作法で",
+ "リポジトリの画面をそのまま運用記録に当てはめる。草（コントリビューショングラフ）は日々の対ベンチ勝敗、コミット一覧は判断の履歴、ラベルは約定・却下・見送り。",
+ "参照: GitHub（#0d1117 地 / #30363d の罫線 / 青のリンク / 草グリッド / コミット行とラベル）",
+`<div class="repo"><span class="o">katsudon1cho /</span><b>kabusim</b><span class="badge">Public</span></div>
+ <div class="box">
+   <div class="hd">22 sessions in the last month</div>
+   <div class="bd">
+     <div class="grid">${ghGrid()}</div>
+     <div class="lg">Less<i style="background:#151b23"></i><i style="background:#033a16"></i>
+       <i style="background:#196c2e"></i><i style="background:#2ea043"></i><i style="background:#56d364"></i>More</div>
+   </div>
+ </div>
+ <div class="box">
+   <div class="hd">Performance</div>
+   <div class="bd">
+     <div class="kv"><span>US book vs SPY</span><b style="color:#3fb950">+0.56pt</b></div>
+     <div class="kv"><span>JP book vs 1306.T</span><b style="color:#f85149">−0.46pt</b></div>
+     <div class="kv"><span>Cash</span><b>24.4%</b></div>
+   </div>
+ </div>
+ <div class="box" style="padding-bottom:.2rem">
+   <div class="hd">Recent decisions</div>
+   <div class="cm"><span class="av"></span><span class="m">
+     <span class="t"><span class="lab g">filled</span>買い LLY 3株 — 織り込み不足と判断</span>
+     <span class="s">kabusim-bot committed 1 hour ago</span></span><span class="sha">aabe4fc</span></div>
+   <div class="cm"><span class="av"></span><span class="m">
+     <span class="t"><span class="lab b">no-trade</span>売買なし — 前提は崩れていない</span>
+     <span class="s">kabusim-bot committed 11 hours ago</span></span><span class="sha">deb894b</span></div>
+   <div class="cm"><span class="av"></span><span class="m">
+     <span class="t"><span class="lab r">rejected</span>却下 6861.T — 上限25%超過</span>
+     <span class="s">kabusim-bot committed 16 hours ago</span></span><span class="sha">8c8420d</span></div>
+ </div>`],
+
+["Vercel / Geist の作法で",
+ "純黒と純白のみ。角丸を捨て、1pxの直線で区画を切る。等幅の小さな英字ラベルと、極端に字間を詰めた巨大な数字。色は一切使わない。",
+ "参照: Vercel / Geist（純黒地・白文字 / #1f1f1f の1px罫線 / 幾何学的な区画 / 等幅の小ラベル / 彩度ゼロ）",
+`<div class="nav"><span class="tri"></span><span class="t">kabusim</span><span class="s">DAY 22 / 250</span></div>
+ <div class="hero">
+   <div class="lbl">Difference vs SPY</div>
+   <div class="big">+0.56</div>
+ </div>
+ <div class="cells">
+   <div class="cell"><div class="lbl">Equity</div><div class="v">$51,240</div></div>
+   <div class="cell"><div class="lbl">Return</div><div class="v">+2.48%</div></div>
+   <div class="cell"><div class="lbl">Benchmark</div><div class="v">+1.92%</div></div>
+   <div class="cell"><div class="lbl">Cash</div><div class="v">24.4%</div></div>
+ </div>
+ <div class="chart"><div class="lbl" style="margin-bottom:.5rem">22 sessions</div>${CHART(74)}</div>
+ <div class="lst">
+   <div class="li"><span class="sq"></span><span class="n">LLY</span><span class="p">3 · +0.3%</span></div>
+   <div class="li"><span class="sq o"></span><span class="n">NVDA</span><span class="p">12 · −1.2%</span></div>
+   <div class="li"><span class="sq"></span><span class="n">V</span><span class="p">9 · +1.8%</span></div>
+   <div class="li"><span class="sq o"></span><span class="n">XOM</span><span class="p">18 · −0.4%</span></div>
+   <div class="li"><span class="sq o"></span><span class="n">CASH</span><span class="p">24.4%</span></div>
+ </div>`],
+
+["Notion の作法で",
+ "書類として扱う。ページのプロパティに数字を置き、本文に判断を書く。コールアウトとトグルで畳む。読み書きの道具の作法。",
+ "参照: Notion（白地 / #37352f の文字 / プロパティ行 / 淡いピル / グレーのコールアウト / 細い区切り線）",
+`<div class="crumb">運用記録 / 2026 / 8月</div>
+ <h1>2026-08-06 米国株セッション</h1>
+ <div class="props">
+   <div class="prop"><span class="k">状態</span><span class="v"><span class="pill g">約定</span></span></div>
+   <div class="prop"><span class="k">総資産</span><span class="v">$51,240</span></div>
+   <div class="prop"><span class="k">対 SPY</span><span class="v"><span class="pill g">+0.56pt</span></span></div>
+   <div class="prop"><span class="k">対 1306.T</span><span class="v"><span class="pill r">−0.46pt</span></span></div>
+   <div class="prop"><span class="k">買い枠</span><span class="v"><span class="pill y">1 / 4</span></span></div>
+   <div class="prop"><span class="k">経過</span><span class="v">22 / 250 営業日</span></div>
+ </div>
+ <div class="callout"><span class="i">💡</span>
+   <span class="t">数日の値動きで一喜一憂しないこと。売買ゼロは正常な結果であり、むしろ多数派であるべき。</span></div>
+ <h2>本日の判断</h2>
+ <p class="bul">買い LLY 3株 @$1,163.89</p>
+ <ul class="bul" style="margin:0;padding-left:1.1rem">
+   <li>通期ガイダンスを82-85B→85-87Bへ上方修正</li>
+   <li>株価反応は+4%程度と控えめ。織り込み不足と判断</li>
+   <li>誤りと認める条件：次回決算で成長が明確に鈍化</li>
+ </ul>
+ <div class="divider"></div>
+ <h2>保有</h2>
+ <table>
+   <tr><th>銘柄</th><th class="r">株数</th><th class="r">評価額</th><th class="r">損益</th></tr>
+   <tr><td>LLY</td><td class="r">3</td><td class="r">3,494</td><td class="r">+0.3%</td></tr>
+   <tr><td>NVDA</td><td class="r">12</td><td class="r">2,180</td><td class="r">−1.2%</td></tr>
+   <tr><td>V</td><td class="r">9</td><td class="r">2,910</td><td class="r">+1.8%</td></tr>
+ </table>
+ <div class="divider"></div>
+ <div class="tog"><span class="a">▸</span><span>反省点を開く</span></div>`],
+];
+
+document.getElementById("gal").innerHTML = DESIGNS.map((d,i) => `
+  <section class="demo">
+    <div class="demo-h"><span class="demo-n">案${i+24}</span><h2>${d[0]}</h2></div>
+    <p>${d[1]}</p>
+    <p class="ref">${d[2]}</p>
+    <div class="frame m${i+24}"><div class="app">${d[3]}</div></div>
+  </section>`).join("");
+</script>
+</body>
+</html>

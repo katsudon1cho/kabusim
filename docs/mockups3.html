@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>デザイン案 13〜18（構造から変えた案）— 仮想運用記録</title>
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#101014">
+<style>
+:root{
+  --g-bg:#101014;--g-card:#17171d;--g-line:#26262f;--g-tx:#e8e8ee;--g-dim:#8a8a99;--g-ac:#7ee0b8;
+  --g-sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic UI","Noto Sans JP",sans-serif;
+  --g-mono:ui-monospace,SFMono-Regular,"SF Mono","Cascadia Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:0 1rem 4rem;background:var(--g-bg);color:var(--g-tx);font-family:var(--g-sans);line-height:1.75}
+.wrap{max-width:78rem;margin-inline:auto}
+.intro{padding:2.5rem 0 1rem;max-width:44rem}
+.intro h1{margin:0 0 .6rem;font-size:1.55rem}
+.intro p{margin:.6rem 0;color:var(--g-dim);font-size:.9rem}
+.intro a{color:var(--g-ac)}
+.diag{background:var(--g-card);border:1px solid var(--g-line);border-left:3px solid #e0a35c;
+  border-radius:12px;padding:1rem 1.25rem;margin:1.4rem 0 2.4rem;max-width:44rem;font-size:.86rem;color:#c6c6d4}
+.diag b{color:var(--g-tx)}
+
+.gal{display:grid;gap:2.6rem;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));align-items:start}
+.demo{min-width:0}
+.demo-h{display:flex;align-items:baseline;gap:.6rem;margin-bottom:.15rem}
+.demo-n{font-family:var(--g-mono);font-size:.7rem;color:var(--g-dim);letter-spacing:.1em}
+.demo-h h2{margin:0;font-size:1.02rem}
+.demo>p{margin:.1rem 0 .5rem;font-size:.8rem;color:var(--g-dim);line-height:1.65}
+.why{margin:0 0 .9rem;font-size:.74rem;color:var(--g-ac);border-left:2px solid #7ee0b855;padding-left:.6rem;line-height:1.6}
+
+.frame{width:100%;max-width:375px;height:660px;overflow:hidden;border:9px solid #2a2a33;border-radius:34px;
+  box-shadow:0 18px 50px #0009,inset 0 0 0 1px #ffffff0d}
+.frame>.app{width:100%;height:100%;overflow-y:auto;scrollbar-width:none}
+.frame>.app::-webkit-scrollbar{display:none}
+.app{padding:1.1rem}
+svg{display:block;max-width:100%}
+
+/* ===== 案13 年表 ===== */
+.m13{background:#0f1116;color:#dde3ec;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+.m13 .hd{font-size:.6rem;letter-spacing:.18em;color:#6d7789;text-transform:uppercase}
+.m13 .lead{font-size:1.7rem;font-weight:700;letter-spacing:-.02em;margin:.15rem 0 1.3rem;font-variant-numeric:tabular-nums}
+.m13 .tl{position:relative;padding-left:1.5rem}
+.m13 .tl::before{content:"";position:absolute;left:5px;top:4px;bottom:0;width:1px;background:#242c39}
+.m13 .ev{position:relative;padding-bottom:1.5rem}
+.m13 .ev::before{content:"";position:absolute;left:-1.5rem;top:5px;width:11px;height:11px;border-radius:50%;
+  background:#0f1116;border:2px solid #48536a}
+.m13 .ev.buy::before{border-color:#4fd39a;background:#4fd39a}
+.m13 .ev.sell::before{border-color:#ef7b8f;background:#ef7b8f}
+.m13 .when{font-family:ui-monospace,Consolas,monospace;font-size:.62rem;color:#6d7789;letter-spacing:.04em}
+.m13 .act{font-size:.9rem;font-weight:650;margin:.1rem 0 .25rem}
+.m13 .act .t{font-family:ui-monospace,Consolas,monospace}
+.m13 .txt{font-size:.76rem;line-height:1.7;color:#9aa5b6;margin:0}
+.m13 .after{display:inline-block;margin-top:.45rem;font-family:ui-monospace,Consolas,monospace;font-size:.63rem;
+  padding:.15rem .45rem;border-radius:5px;background:#4fd39a1a;color:#4fd39a}
+.m13 .after.bad{background:#ef7b8f1a;color:#ef7b8f}
+.m13 .after.pend{background:#48536a26;color:#8b95a8}
+
+/* ===== 案14 スコアボード ===== */
+.m14{background:#0a0a0a;color:#f2f2f0;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+.m14 .app{padding:1.2rem 1rem}
+.m14 .lg{font-size:.55rem;letter-spacing:.3em;color:#7a7a72;text-transform:uppercase;text-align:center}
+.m14 .board{border:1px solid #26261f;border-radius:10px;margin:.7rem 0 1rem;overflow:hidden;background:#111110}
+.m14 .side{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem}
+.m14 .side+.side{border-top:1px solid #26261f}
+.m14 .side.me{background:#14140f}
+.m14 .nm{font-size:.9rem;font-weight:700;letter-spacing:.06em}
+.m14 .nm small{display:block;font-size:.55rem;letter-spacing:.16em;color:#7a7a72;font-weight:400}
+.m14 .sc{font-size:2.1rem;font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums;color:#f7d154}
+.m14 .side:not(.me) .sc{color:#8d8d86}
+.m14 .lead{text-align:center;font-size:.78rem;color:#f7d154;letter-spacing:.1em;font-variant-numeric:tabular-nums}
+.m14 .prog{margin:1.3rem 0 .4rem}
+.m14 .pbar{height:6px;background:#22221c;border-radius:3px;overflow:hidden}
+.m14 .pbar i{display:block;height:100%;background:#f7d154;border-radius:3px}
+.m14 .pl{display:flex;justify-content:space-between;font-family:ui-monospace,Consolas,monospace;
+  font-size:.6rem;color:#7a7a72;margin-top:.35rem;font-variant-numeric:tabular-nums}
+.m14 .rec{display:flex;gap:.35rem;margin:1.2rem 0 .3rem;flex-wrap:wrap}
+.m14 .rec i{width:13px;height:13px;border-radius:2px;background:#22221c}
+.m14 .rec i.w{background:#f7d154}
+.m14 .rec i.l{background:#4a3f3f}
+.m14 .cap{font-size:.62rem;color:#7a7a72;font-family:ui-monospace,Consolas,monospace}
+
+/* ===== 案15 カレンダー・ヒートマップ ===== */
+.m15{background:#0d0f0e;color:#dfe6e2;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+.m15 .hd{font-size:.6rem;letter-spacing:.16em;color:#6b7a73;text-transform:uppercase}
+.m15 .big{font-size:1.9rem;font-weight:700;letter-spacing:-.03em;margin:.1rem 0 .1rem;font-variant-numeric:tabular-nums}
+.m15 .sub{font-size:.74rem;color:#8b9a92;margin-bottom:1.1rem}
+.m15 .grid{display:grid;grid-template-columns:repeat(26,1fr);gap:2.5px}
+.m15 .grid i{aspect-ratio:1;border-radius:1.5px;background:#181d1b}
+.m15 .lgd{display:flex;align-items:center;gap:.3rem;margin-top:.7rem;font-size:.58rem;color:#6b7a73;
+  font-family:ui-monospace,Consolas,monospace}
+.m15 .lgd i{width:9px;height:9px;border-radius:1.5px;display:inline-block}
+.m15 .mo{display:flex;justify-content:space-between;font-family:ui-monospace,Consolas,monospace;
+  font-size:.55rem;color:#6b7a73;margin-top:.35rem}
+.m15 .box{border-top:1px solid #1c2321;margin-top:1.2rem;padding-top:.9rem}
+.m15 .kv{display:flex;justify-content:space-between;font-size:.76rem;color:#8b9a92;padding:.3rem 0;
+  font-variant-numeric:tabular-nums}
+.m15 .kv b{color:#dfe6e2;font-weight:650}
+
+/* ===== 案16 ウィジェット・スタック ===== */
+.m16{background:#0b0b0f;color:#eceef5;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+.m16 .app{padding:1.2rem .9rem;display:flex;flex-direction:column;gap:.7rem}
+.m16 .w{border-radius:22px;padding:1.2rem;min-height:118px;display:flex;flex-direction:column;justify-content:space-between}
+.m16 .w .k{font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;opacity:.7}
+.m16 .w .n{font-size:2.15rem;font-weight:750;letter-spacing:-.04em;font-variant-numeric:tabular-nums;line-height:1}
+.m16 .w .s{font-size:.72rem;opacity:.75}
+.m16 .w1{background:linear-gradient(150deg,#1f7a5a,#0f4d38);color:#eafff5}
+.m16 .w2{background:#1a1c24;color:#dde1ec}
+.m16 .w3{background:#241d2e;color:#ece2f7}
+.m16 .w4{background:#1a1c24;color:#dde1ec}
+.m16 .row{display:flex;justify-content:space-between;align-items:baseline;font-size:.8rem;padding:.25rem 0;
+  font-variant-numeric:tabular-nums}
+.m16 .row small{opacity:.6;font-size:.66rem}
+.m16 .dots{display:flex;gap:5px;justify-content:center;padding:.3rem 0 0}
+.m16 .dots i{width:5px;height:5px;border-radius:50%;background:#3a3d4a}
+.m16 .dots i.on{background:#8f95a8}
+
+/* ===== 案17 ツリーマップ ===== */
+.m17{background:#0c0d10;color:#e4e7ee;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+.m17 .hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.75rem}
+.m17 .hd .t{font-size:.85rem;font-weight:650}
+.m17 .hd .v{font-family:ui-monospace,Consolas,monospace;font-size:.72rem;color:#7f8798;font-variant-numeric:tabular-nums}
+.m17 .tm{display:grid;gap:3px;height:190px;grid-template-columns:repeat(10,1fr);grid-template-rows:repeat(6,1fr)}
+.m17 .tm div{border-radius:7px;padding:.5rem .55rem;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.m17 .tm .tk{font-family:ui-monospace,Consolas,monospace;font-size:.72rem;font-weight:650;line-height:1.2}
+.m17 .tm .pc{font-family:ui-monospace,Consolas,monospace;font-size:.62rem;opacity:.75}
+.m17 .g1{background:#1d6b4f;color:#e8fff5}
+.m17 .g2{background:#2a5f78;color:#e6f5ff}
+.m17 .g3{background:#5d3f6e;color:#f6e9ff}
+.m17 .g4{background:#6b4a2c;color:#ffefdf}
+.m17 .cash{background:#181a20;color:#6f7688;border:1px dashed #2a2e38}
+.m17 .note{font-size:.66rem;color:#7f8798;margin:.55rem 0 1.4rem;line-height:1.6}
+.m17 .cap{font-family:ui-monospace,Consolas,monospace;font-size:.6rem;color:#7f8798}
+
+/* ===== 案18 一行（ゼロUI） ===== */
+.m18{background:#0e0e0c;color:#e8e6de;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+.m18 .app{padding:2.6rem 1.6rem;height:100%;display:flex;flex-direction:column;justify-content:center;gap:2.6rem}
+.m18 .line{font-size:1.42rem;line-height:2;font-weight:400;letter-spacing:.02em}
+.m18 .line b{font-weight:650;color:#8fe3bb}
+.m18 .line .r{color:#e79aa8}
+.m18 .foot{font-family:ui-monospace,Consolas,monospace;font-size:.62rem;color:#5f5d55;letter-spacing:.1em;
+  display:flex;justify-content:space-between}
+.m18 .tap{font-family:ui-monospace,Consolas,monospace;font-size:.62rem;color:#5f5d55;letter-spacing:.08em;
+  border:1px solid #26241e;border-radius:8px;padding:.5rem .75rem;text-align:center}
+
+@media(max-width:700px){.gal{grid-template-columns:1fr}.frame{height:620px;margin-inline:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="intro">
+  <h1>デザイン案 13〜18</h1>
+  <p>骨格そのものを変えた6案。
+     <a href="mockups.html">案1〜7</a> ／ <a href="mockups2.html">案8〜12</a></p>
+</div>
+
+<div class="diag">
+  <b>前の12案がどれも似て見えた理由。</b>
+  すべて骨格が同じでした。ヘッダー → ブックごとのカード → 大きな数字 → スパークライン →
+  指標 → 保有一覧。変えていたのは色と書体と装飾だけで、<b>画面の構造は一度も変えていません</b>。
+  だから何案見ても着せ替えに見えたのだと思います。
+  <br><br>
+  ここから先は<b>「何を画面の主役に置くか」から作り直した</b>6案です。
+  総資産を主役にしない案、時間を主役にする案、そもそも数字を出さない案が入っています。
+</div>
+
+<div class="gal" id="gal"></div>
+
+</div>
+
+<script>
+/* ---------- 案15 ヒートマップのマス目 ---------- */
+function heat() {
+  let out = "", seed = 7;
+  const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  for (let i = 0; i < 130; i++) {
+    if (i > 22) { out += `<i></i>`; continue; }          // 未来は空
+    const v = rnd() * 2 - 0.85;
+    const c = v > 0
+      ? `rgba(79,211,154,${(0.18 + Math.min(v, 1) * 0.72).toFixed(2)})`
+      : `rgba(224,120,140,${(0.18 + Math.min(-v, 1) * 0.6).toFixed(2)})`;
+    out += `<i style="background:${c}"></i>`;
+  }
+  return out;
+}
+
+/* ---------- 案14 勝敗マス ---------- */
+function record() {
+  let out = "", seed = 3;
+  const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  for (let i = 0; i < 30; i++) {
+    if (i >= 22) { out += `<i></i>`; continue; }
+    out += `<i class="${rnd() > 0.42 ? "w" : "l"}"></i>`;
+  }
+  return out;
+}
+
+const DESIGNS = [
+
+["年表（1年を1本の軸で見る）",
+ "主役を「総資産」ではなく「時間」にした案。判断が起きた順に打点され、それぞれに『その後どうなったか』のバッジが付く。11月にLLYの判断を答え合わせするための装置。",
+ "変えた構造: 資産額を主役から降ろし、判断の履歴を第一階層に置いた",
+`<div class="hd">SPY との差</div>
+ <div class="lead">+0.56pt</div>
+ <div class="tl">
+   <div class="ev buy">
+     <div class="when">08-06 01:13 · US-OPEN</div>
+     <div class="act">買い <span class="t">LLY 3株</span></div>
+     <p class="txt">上方修正の規模に対し株価反応が控えめ。織り込み不足と判断。</p>
+     <span class="after pend">検証は11月の本決算</span>
+   </div>
+   <div class="ev">
+     <div class="when">08-05 14:45 · JP-CLOSE</div>
+     <div class="act">売買なし</div>
+     <p class="txt">前場の下げは指数連動。個別の材料ではないと判断。</p>
+     <span class="after">翌日 +1.2% 判断は妥当</span>
+   </div>
+   <div class="ev">
+     <div class="when">08-05 09:15 · JP-OPEN</div>
+     <div class="act">却下 <span class="t">6861.T</span></div>
+     <p class="txt">1銘柄上限25%を超過。元本に対し1単元が大きすぎる。</p>
+     <span class="after bad">制約側の設計ミス</span>
+   </div>
+   <div class="ev sell">
+     <div class="when">08-04 23:00 · US-OPEN</div>
+     <div class="act">売り <span class="t">AMD 8株</span></div>
+     <p class="txt">利益率の見通しが崩れ、買った前提が成立しなくなった。</p>
+     <span class="after">その後 −4.1% 売って正解</span>
+   </div>
+ </div>`],
+
+["スコアボード（1年勝負として見る）",
+ "SPY との1年勝負を試合として表示する。点差、経過、勝った日と負けた日。評価期間が1年であることが初めて画面に出てくる案。",
+ "変えた構造: 資産額ではなく『勝敗』を主役に。時間の残りを可視化",
+`<div class="lg">US Book · 2026 Season</div>
+ <div class="board">
+   <div class="side me"><div class="nm">YOU<small>米国株ブック</small></div><div class="sc">+2.48</div></div>
+   <div class="side"><div class="nm">SPY<small>ベンチマーク</small></div><div class="sc">+1.92</div></div>
+ </div>
+ <div class="lead">LEAD +0.56pt</div>
+ <div class="prog">
+   <div class="pbar"><i style="width:8.8%"></i></div>
+   <div class="pl"><span>22 営業日 経過</span><span>残り 228</span></div>
+ </div>
+ <div class="rec">${record()}</div>
+ <div class="cap">勝った日 13 / 負けた日 9</div>
+ <div class="lg" style="margin-top:1.8rem">JP Book · 2026 Season</div>
+ <div class="board">
+   <div class="side me"><div class="nm">YOU<small>日本株ブック</small></div><div class="sc">+1.55</div></div>
+   <div class="side"><div class="nm">1306<small>ベンチマーク</small></div><div class="sc">+2.01</div></div>
+ </div>
+ <div class="lead" style="color:#c98a8a">BEHIND −0.46pt</div>`],
+
+["カレンダー（1年を一望する）",
+ "1年分の営業日をマス目にして、その日ベンチに勝ったか負けたかで色を塗る。連勝・連敗・停滞が形として見える。まだ埋まっていないマスが『これは1年の実験だ』と毎日思い出させる。",
+ "変えた構造: 折れ線をやめ、日次の勝敗をマス目で表現。未来の余白を見せる",
+`<div class="hd">2026 · 米国株ブック</div>
+ <div class="big">+0.56pt</div>
+ <div class="sub">250営業日のうち 22日を消化</div>
+ <div class="grid">${heat()}</div>
+ <div class="mo"><span>8月</span><span>11月</span><span>2月</span><span>5月</span><span>7月</span></div>
+ <div class="lgd">負け
+   <i style="background:rgba(224,120,140,.65)"></i><i style="background:rgba(224,120,140,.3)"></i>
+   <i style="background:#181d1b"></i>
+   <i style="background:rgba(79,211,154,.4)"></i><i style="background:rgba(79,211,154,.85)"></i>
+   勝ち</div>
+ <div class="box">
+   <div class="kv"><span>最長連勝</span><b>4日</b></div>
+   <div class="kv"><span>最長連敗</span><b>3日</b></div>
+   <div class="kv"><span>最大ドローダウン</span><b>−2.1%</b></div>
+   <div class="kv"><span>売買した日</span><b>3日 / 22日</b></div>
+ </div>`],
+
+["ウィジェット・スタック",
+ "1枚のカードに情報を1つだけ載せ、縦に積む。スワイプで切り替える前提。一度に目に入る情報量を強制的に絞る構成で、ロック画面のウィジェットに近い。",
+ "変えた構造: 1画面に全部載せるのをやめ、1カード1情報に分解した",
+`<div class="w w1">
+   <div class="k">SPY との差</div>
+   <div><div class="n">+0.56<span style="font-size:.9rem">pt</span></div>
+   <div class="s">市場 +1.92% / あなた +2.48%</div></div>
+ </div>
+ <div class="w w2">
+   <div class="k">米国株ブック</div>
+   <div><div class="n">$51,240</div><div class="s">現金 24.4% · 買い枠 1/4</div></div>
+ </div>
+ <div class="w w3">
+   <div class="k">直近の判断</div>
+   <div><div style="font-size:1rem;font-weight:650;line-height:1.5">買い LLY 3株</div>
+   <div class="s">上方修正に対し株価反応が控えめ。織り込み不足と判断。</div></div>
+ </div>
+ <div class="w w4">
+   <div class="k">保有</div>
+   <div>
+     <div class="row"><span>LLY <small>3株</small></span><span>+0.3%</span></div>
+     <div class="row"><span>NVDA <small>12株</small></span><span>−1.2%</span></div>
+   </div>
+ </div>
+ <div class="dots"><i class="on"></i><i></i><i></i></div>`],
+
+["ツリーマップ（ポートフォリオの形）",
+ "保有と現金を面積で描く。どこに寄っているか、25%上限にどれだけ近いかが、数字を読まずに形で分かる。色はセクター。折れ線を一切使わない案。",
+ "変えた構造: 時系列をやめ、いま何をどれだけ持っているかの『形』を主役にした",
+`<div class="hd"><span class="t">米国株ブック</span><span class="v">$51,240 · +2.48%</span></div>
+ <div class="tm">
+   <div class="g1" style="grid-column:span 5;grid-row:span 4"><span class="tk">LLY</span><span class="pc">医薬 · 24.1%</span></div>
+   <div class="g2" style="grid-column:span 5;grid-row:span 2"><span class="tk">NVDA</span><span class="pc">半導体 · 14.3%</span></div>
+   <div class="g3" style="grid-column:span 3;grid-row:span 2"><span class="tk">V</span><span class="pc">金融 · 9.0%</span></div>
+   <div class="g4" style="grid-column:span 2;grid-row:span 2"><span class="tk">XOM</span><span class="pc">6.1%</span></div>
+   <div class="g2" style="grid-column:span 3;grid-row:span 2"><span class="tk">AVGO</span><span class="pc">10.2%</span></div>
+   <div class="cash" style="grid-column:span 7;grid-row:span 2"><span class="tk">現金</span><span class="pc">36.3%</span></div>
+ </div>
+ <div class="note">LLY が上限25%に迫っている。半導体（NVDA+AVGO）は別銘柄だが合計24.5%で、実質ひとつの賭けになっている。</div>
+ <div class="hd"><span class="t">日本株ブック</span><span class="v">¥20,310,000 · +1.55%</span></div>
+ <div class="tm" style="height:150px">
+   <div class="g2" style="grid-column:span 4;grid-row:span 3"><span class="tk">7203.T</span><span class="pc">自動車 · 19.4%</span></div>
+   <div class="g4" style="grid-column:span 3;grid-row:span 3"><span class="tk">8058.T</span><span class="pc">商社 · 14.0%</span></div>
+   <div class="g1" style="grid-column:span 3;grid-row:span 3"><span class="tk">4568.T</span><span class="pc">医薬 · 12.2%</span></div>
+   <div class="cash" style="grid-column:span 10;grid-row:span 3"><span class="tk">現金</span><span class="pc">54.4%</span></div>
+ </div>
+ <div class="cap">面積 = 評価額 / 色 = セクター</div>`],
+
+["一行（数字を出さない）",
+ "画面に文章を1〜2文だけ置く。数字はタップして初めて出る。開いても何も押し寄せてこないので、頻繁に見る動機そのものが生まれない。「一喜一憂するな」に最も忠実な案。",
+ "変えた構造: 数値表示を第二階層に落とし、第一階層を文章にした",
+`<div class="line">
+   市場に <b>0.56pt</b> 勝っている。<br>
+   今日は<b>何もしなかった</b>。<br>
+   日本株は <span class="r">0.46pt</span> 負けている。
+ </div>
+ <div class="tap">タップして数字を見る</div>
+ <div class="foot"><span>22 / 250 日</span><span>次 14:45 JP-CLOSE</span></div>`],
+];
+
+document.getElementById("gal").innerHTML = DESIGNS.map((d,i) => `
+  <section class="demo">
+    <div class="demo-h"><span class="demo-n">案${i+13}</span><h2>${d[0]}</h2></div>
+    <p>${d[1]}</p>
+    <p class="why">${d[2]}</p>
+    <div class="frame m${i+13}"><div class="app">${d[3]}</div></div>
+  </section>`).join("");
+</script>
+</body>
+</html>
