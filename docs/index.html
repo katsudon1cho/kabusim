@@ -6,8 +6,8 @@
 <title>仮想運用記録</title>
 <meta name="description" content="仮想資金で運用するエージェントの判断記録">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#f4f1e8" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#13120f" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#070B14">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="運用記録">
@@ -17,21 +17,21 @@
 </head>
 <body>
 
-<div class="grain" aria-hidden="true"></div>
+<div class="aurora" aria-hidden="true"></div>
 
-<header class="masthead">
-  <div class="masthead-top">
-    <span class="seal" aria-hidden="true">記</span>
-    <div class="masthead-title">
+<header class="topbar">
+  <div class="brand">
+    <span class="pulse" id="pulse" aria-hidden="true"></span>
+    <div class="brand-txt">
       <h1>仮想運用記録</h1>
-      <p class="subtitle">Virtual Portfolio Journal</p>
+      <p id="updated">読み込み中</p>
     </div>
   </div>
-  <p class="colophon" id="colophon">読み込み中…</p>
-  <div class="rule-double" aria-hidden="true"></div>
+  <div class="chip-live" id="freshness">—</div>
 </header>
 
-<nav class="tabs" role="tablist" aria-label="表示の切り替え">
+<nav class="seg" role="tablist" aria-label="表示の切り替え">
+  <span class="seg-glider" id="glider" aria-hidden="true"></span>
   <button role="tab" aria-selected="true"  aria-controls="view-overview" id="tab-overview">概要</button>
   <button role="tab" aria-selected="false" aria-controls="view-reports"  id="tab-reports">日報</button>
   <button role="tab" aria-selected="false" aria-controls="view-log"      id="tab-log">履歴</button>
@@ -40,33 +40,29 @@
 <main>
 
   <section id="view-overview" role="tabpanel" aria-labelledby="tab-overview">
-    <div id="books"></div>
+    <div id="books" class="stack"></div>
   </section>
 
   <section id="view-reports" role="tabpanel" aria-labelledby="tab-reports" hidden>
-    <div class="picker">
-      <label for="report-date" class="picker-label">日付</label>
-      <select id="report-date"></select>
-    </div>
-    <article id="report-body" class="paper"></article>
+    <div class="daterail" id="daterail"></div>
+    <article id="report-body" class="card prose"></article>
   </section>
 
   <section id="view-log" role="tabpanel" aria-labelledby="tab-log" hidden>
-    <div class="filters" id="log-filters">
-      <button data-filter="all"      class="on">すべて</button>
+    <div class="chips" id="log-filters">
+      <button data-filter="all" class="on">すべて</button>
       <button data-filter="FILLED">約定</button>
       <button data-filter="REJECTED">却下</button>
     </div>
-    <p class="note">却下された注文も残してある。何をやろうとして止められたかが、この記録の一番の材料になる。</p>
-    <ol class="ledger" id="ledger"></ol>
+    <p class="hint">却下された注文も残している。何をやろうとして止められたかが、この記録の一番の材料になる。</p>
+    <ol class="feed" id="ledger"></ol>
   </section>
 
 </main>
 
 <footer>
-  <div class="rule" aria-hidden="true"></div>
   <p>実際の金銭は動いていない。判断はモデル、制約はコードが強制している。</p>
-  <p class="stamp" id="stamp"></p>
+  <p class="mono" id="stamp"></p>
 </footer>
 
 <script src="app.js"></script>

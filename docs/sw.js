@@ -1,7 +1,8 @@
 /* 外殻はキャッシュ優先、データはネットワーク優先。
    圏外でも直近に開いた内容が読める状態を保つのが目的。 */
 
-const VERSION = "v1";
+// 見た目を作り替えたら必ず上げること。上げないと端末に古い外殻が残り続ける。
+const VERSION = "v2";
 const SHELL = `shell-${VERSION}`;
 const DATA = `data-${VERSION}`;
 

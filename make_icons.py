@@ -2,7 +2,8 @@
 """
 make_icons.py — PWA のアイコンを生成する。
 
-朱地に紙色の折れ線。maskable でも切り落とされないよう、図は中央60%に収めてある。
+紺黒地にミントの折れ線。画面の配色に合わせてある。
+maskable でも切り落とされないよう、図は中央60%に収めてある。
 Pillow を足したくないので、zlib と struct だけで PNG を書く。
 
     python make_icons.py        # docs/icon-192.png と docs/icon-512.png を作り直す
@@ -12,8 +13,8 @@ import struct
 import zlib
 from pathlib import Path
 
-SHU = (0xB2, 0x3C, 0x26)     # 地
-PAPER = (0xF4, 0xF1, 0xE8)   # 図
+SHU = (0x0B, 0x12, 0x22)     # 地（紺黒）
+PAPER = (0x00, 0xE5, 0xA0)   # 図（ミント）
 
 # 単位座標(0〜1)。右肩上がりの折れ線と、その下の基線。
 LINE = [(0.26, 0.63), (0.40, 0.50), (0.52, 0.57), (0.64, 0.34), (0.75, 0.27)]
