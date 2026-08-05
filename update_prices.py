@@ -17,7 +17,6 @@ yfinance の値は数分遅れる。加えて GitHub のスケジュール実行
 """
 
 import json
-import math
 import sys
 from pathlib import Path
 
@@ -35,16 +34,38 @@ def _col(df, key, ticker):
 
 
 def series(df, ticker, as_date=False):
-    """欠損を落として [時刻, 値] の2本の配列にする。JSONを小さく保つため丸める。"""
-    s = _col(df, "Close", ticker)
-    if s is None:
+    """ローソク足を描くので四本値と出来高を返す。JSONを小さく保つため丸める。
+
+    列ごとに欠損位置がずれることがあるので、終値のある行だけを採用して揃える。
+    """
+    close = _col(df, "Close", ticker)
+    if close is None:
         return None
-    s = s.dropna()
-    if s.empty:
+    close = close.dropna()
+    if close.empty:
         return None
-    t = [str(i.date()) if as_date else int(i.timestamp()) for i in s.index]
-    v = [round(float(x), 2) for x in s]
-    return {"t": t, "v": v}
+    idx = close.index
+
+    def pick(key, default_to_close=True):
+        col = _col(df, key, ticker)
+        if col is None:
+            return [round(float(x), 2) for x in close] if default_to_close else [0] * len(idx)
+        col = col.reindex(idx)
+        if default_to_close:
+            col = col.fillna(close)
+            return [round(float(x), 2) for x in col]
+        return [int(x) if x == x else 0 for x in col.fillna(0)]
+
+    return {
+        "t": [str(i.date()) if as_date else int(i.timestamp()) for i in idx],
+        "o": pick("Open"), "h": pick("High"), "l": pick("Low"),
+        "c": [round(float(x), 2) for x in close],
+        "v": pick("Volume", default_to_close=False),
+    }
+
+
+def slice_series(s, n):
+    return {k: v[-n:] for k, v in s.items()}
 
 
 def main() -> int:
@@ -78,17 +99,23 @@ def main() -> int:
         i = series(intra, tk) if intra is not None and not intra.empty else None
 
         # 現在値は5分足の最後を優先。無ければ日足の最後
-        price = i["v"][-1] if i and i["v"] else d["v"][-1]
-        prev = d["v"][-2] if len(d["v"]) >= 2 else d["v"][-1]
-        # 日足の最終が「本日」なら前日終値はその1つ前、そうでなければ最終足が前日終値
+        price = i["c"][-1] if i and i["c"] else d["c"][-1]
+        prev = d["c"][-2] if len(d["c"]) >= 2 else d["c"][-1]
+        day = i if i and i["c"] else slice_series(d, 1)
         quotes[tk] = {
             "price": price,
             "prev_close": prev,
             "chg_pct": round((price / prev - 1) * 100, 2) if prev else 0.0,
+            "open": day["o"][0],
+            "high": round(max(day["h"]), 2),
+            "low": round(min(day["l"]), 2),
+            "volume": sum(day["v"]),
+            "w52h": round(max(d["h"]), 2),
+            "w52l": round(min(d["l"]), 2),
         }
         ser[tk] = {
-            "1d": i or {"t": [], "v": []},
-            "1m": {"t": d["t"][-22:], "v": d["v"][-22:]},
+            "1d": i or {"t": [], "o": [], "h": [], "l": [], "c": [], "v": []},
+            "1m": slice_series(d, 22),
             "1y": d,
         }
 
@@ -133,7 +160,7 @@ def main() -> int:
     }, ensure_ascii=False, separators=(",", ":")), encoding=broker.ENC)
 
     kb = OUT.stat().st_size / 1024
-    intraday = sum(1 for t in ser if ser[t]["1d"]["v"])
+    intraday = sum(1 for t in ser if ser[t]["1d"]["c"])
     print(f"{OUT}: {len(quotes)}銘柄 / 5分足あり {intraday}銘柄 / {kb:,.0f}KB")
     for b in ("us", "jp"):
         c = broker.cur(b)

@@ -7,7 +7,7 @@
 <meta name="description" content="仮想資金で運用するエージェントの判断記録">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#070B14">
+<meta name="theme-color" content="#0B0E11">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="運用記録">
@@ -17,21 +17,16 @@
 </head>
 <body>
 
-<div class="aurora" aria-hidden="true"></div>
-
 <header class="topbar">
   <div class="brand">
     <span class="pulse" id="pulse" aria-hidden="true"></span>
-    <div class="brand-txt">
-      <h1>仮想運用記録</h1>
-      <p id="updated">読み込み中です</p>
-    </div>
+    <span class="bname">仮想運用記録</span>
   </div>
-  <div class="chip-live" id="freshness">—</div>
+  <span class="stamp-live" id="updated">読み込み中です</span>
+  <span class="chip-live" id="freshness">—</span>
 </header>
 
-<nav class="seg" role="tablist" aria-label="表示の切り替え">
-  <span class="seg-glider" id="glider" aria-hidden="true"></span>
+<nav class="tabs" role="tablist" aria-label="表示の切り替え">
   <button role="tab" aria-selected="true"  aria-controls="view-overview" id="tab-overview">概要</button>
   <button role="tab" aria-selected="false" aria-controls="view-holdings" id="tab-holdings">保有</button>
   <button role="tab" aria-selected="false" aria-controls="view-reports"  id="tab-reports">日報</button>
@@ -41,7 +36,7 @@
 <main>
 
   <section id="view-overview" role="tabpanel" aria-labelledby="tab-overview">
-    <div id="books" class="stack"></div>
+    <div id="books"></div>
   </section>
 
   <section id="view-holdings" role="tabpanel" aria-labelledby="tab-holdings" hidden>
@@ -50,21 +45,21 @@
 
   <section id="view-reports" role="tabpanel" aria-labelledby="tab-reports" hidden>
     <div class="daterail" id="daterail"></div>
-    <article id="report-body" class="card prose"></article>
+    <article id="report-body" class="prose"></article>
   </section>
 
   <section id="view-log" role="tabpanel" aria-labelledby="tab-log" hidden>
-    <div class="chips" id="log-filters">
-      <button data-filter="all" class="on">すべて</button>
-      <button data-filter="FILLED">約定</button>
-      <button data-filter="REJECTED">却下</button>
+    <div class="ivs" id="log-filters">
+      <span data-filter="all" class="on">すべて</span>
+      <span data-filter="FILLED">約定</span>
+      <span data-filter="REJECTED">却下</span>
     </div>
     <p class="hint">却下された注文も残しています。何をやろうとして止められたかが、この記録の一番の材料になります。</p>
     <ol class="feed" id="ledger"></ol>
   </section>
 
   <section id="view-detail" hidden>
-    <button class="back" id="back">← 保有一覧へ</button>
+    <button class="back" id="back">← 保有一覧</button>
     <div id="detail"></div>
   </section>
 
