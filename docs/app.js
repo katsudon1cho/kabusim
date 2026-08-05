@@ -17,6 +17,10 @@ const arrow = (v) => ({ up: "▲", down: "▼", flat: "—" }[dir(v)]);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
+// SPY は SPDR S&P 500 ETF。米国ブックは最初から S&P500 を相手にしている
+const BENCH_LABEL = { "SPY": "S&P500", "1306.T": "TOPIX" };
+const benchName = (t) => (BENCH_LABEL[t] ? `${BENCH_LABEL[t]}（${t}）` : t);
+
 let DATA = null;   // summary.json
 let PX = null;     // prices.json
 let RANGE = "1d";
@@ -34,7 +38,7 @@ function book(b) {
 function linechart(values, opts = {}) {
   const { h = 132, labels = [], id = "c", zero = false } = opts;
   const n = values.length;
-  if (!n) return `<p class="empty">${opts.emptyMsg || "データがない。"}</p>`;
+  if (!n) return `<p class="empty">${opts.emptyMsg || "データがありません。"}</p>`;
 
   const W = 340, pad = { l: 2, r: 36, t: 16, b: labels.length ? 18 : 8 };
   let lo = Math.min(...values), hi = Math.max(...values);
@@ -77,9 +81,9 @@ function linechart(values, opts = {}) {
 }
 
 /* 概要の資産推移。自分とベンチの2本 */
-function equityChart(series, benchName, key) {
+function equityChart(series, benchLabel, key) {
   if (!series || !series.length) {
-    return `<p class="empty">まだ日次記録がない。最初の日報セッションで記録が始まる。</p>`;
+    return `<p class="empty">まだ日次の記録がありません。最初の日報セッションで記録が始まります。</p>`;
   }
   const W = 340, H = 132, pad = { l: 2, r: 36, t: 16, b: 18 };
   const vals = series.flatMap((d) => [d.ret, d.bench]).concat([0]);
@@ -113,7 +117,7 @@ function equityChart(series, benchName, key) {
     </svg>
     <div class="legend">
       <span class="k1 ${down ? "dn" : ""}"><i></i>自分</span>
-      <span class="k2"><i></i>${esc(benchName)}</span>
+      <span class="k2"><i></i>${esc(benchLabel)}</span>
       <span class="spacer">${series.length}営業日</span>
     </div>
   </div>`;
@@ -122,7 +126,7 @@ function equityChart(series, benchName, key) {
 /* ---------------- 概要 ---------------- */
 
 function posRows(bk, clickable) {
-  if (!bk.positions.length) return `<p class="empty">保有なし。全額現金で待機している。</p>`;
+  if (!bk.positions.length) return `<p class="empty">保有はありません。全額現金で待機しています。</p>`;
   return bk.positions.map((p) => {
     // バー満タン = 1銘柄25%上限。制約にどれだけ近いかを目で見せる
     const fill = Math.min(100, (p.weight_pct / 25) * 100).toFixed(1);
@@ -154,10 +158,10 @@ function bookCard(bk) {
       <span class="num">${money(bk.currency, bk.equity)}</span>
       <span class="pill ${dir(bk.ret_pct)}">${arrow(bk.ret_pct)} ${pct(bk.ret_pct).replace(/^[+−]/, "")}</span>
     </div>
-    ${equityChart(DATA.series[bk.key], bk.bench, bk.key)}
+    ${equityChart(DATA.series[bk.key], BENCH_LABEL[bk.bench] || bk.bench, bk.key)}
     <dl class="grid2">
-      <div class="stat"><dt>${esc(bk.bench)}</dt><dd class="${dir(bk.bench_pct)}-t">${pct(bk.bench_pct)}</dd></div>
-      <div class="stat"><dt>ベンチとの差</dt><dd class="${dir(bk.diff_pt)}-t">${ptv(bk.diff_pt)}</dd></div>
+      <div class="stat"><dt>${esc(benchName(bk.bench))}</dt><dd class="${dir(bk.bench_pct)}-t">${pct(bk.bench_pct)}</dd></div>
+      <div class="stat"><dt>これとの差</dt><dd class="${dir(bk.diff_pt)}-t">${ptv(bk.diff_pt)}</dd></div>
     </dl>
     <div class="meterline">
       <span>現金 <b>${money(bk.currency, bk.cash)}</b> · ${bk.cash_pct.toFixed(1)}%</span>
@@ -174,7 +178,7 @@ function holdingsView() {
   const books = ["us", "jp"].map(book);
   const total = books.reduce((n, b) => n + b.positions.length, 0);
   if (!total) {
-    return `<p class="empty">まだ1銘柄も保有していない。全額現金で待機中。</p>`;
+    return `<p class="empty">まだ1銘柄も保有していません。全額現金で待機しています。</p>`;
   }
   return books.map((bk) => `
     <section class="card">
@@ -182,7 +186,7 @@ function holdingsView() {
         <h2>${esc(bk.name)}</h2>
         <span class="tag">${bk.positions.length}銘柄 · 現金 ${bk.cash_pct.toFixed(1)}%</span>
       </div>
-      <p class="sec-label">バー満タン = 1銘柄25%上限</p>
+      <p class="sec-label">バーが満タンで1銘柄25%の上限です</p>
       ${posRows(bk, true)}
     </section>`).join("");
 }
@@ -203,10 +207,10 @@ function detailView(tk, bkey) {
   const s = PX && PX.series && PX.series[tk];
   const c = bk.currency;
 
-  if (!p) return `<p class="empty">${esc(tk)} は保有していない。</p>`;
+  if (!p) return `<p class="empty">${esc(tk)} は保有していません。</p>`;
 
   const ser = s && s[RANGE] && s[RANGE].v.length ? s[RANGE] : null;
-  let chart = `<p class="empty">この期間の値動きを取得できていない。市場が開くと入る。</p>`;
+  let chart = `<p class="empty">この期間の値動きをまだ取得できていません。市場が開くと入ります。</p>`;
   let rangeChg = null;
   if (ser) {
     rangeChg = (ser.v[ser.v.length - 1] / ser.v[0] - 1) * 100;
@@ -281,7 +285,7 @@ let logFilter = "all";
 
 function renderLog() {
   const list = DATA.trades.filter((t) => logFilter === "all" || t.status === logFilter);
-  if (!list.length) { $("#ledger").innerHTML = `<p class="empty">該当する記録がない。</p>`; return; }
+  if (!list.length) { $("#ledger").innerHTML = `<p class="empty">該当する記録がありません。</p>`; return; }
   $("#ledger").innerHTML = list.map((t, i) => {
     const ok = t.status === "FILLED";
     const when = t.ts.slice(5, 16).replace("T", " ");
@@ -307,7 +311,7 @@ async function showReport(date) {
   const body = $("#report-body");
   [...document.querySelectorAll("#daterail button")].forEach((b) =>
     b.classList.toggle("on", b.dataset.date === date));
-  if (!date) { body.innerHTML = `<p class="empty">まだ日報がない。最初の report セッションで書かれる。</p>`; return; }
+  if (!date) { body.innerHTML = `<p class="empty">まだ日報がありません。最初の report セッションで書かれます。</p>`; return; }
   if (reportCache.has(date)) { body.innerHTML = reportCache.get(date); return; }
   body.innerHTML = `<p class="loading">読み込み中…</p>`;
   try {
@@ -317,7 +321,7 @@ async function showReport(date) {
     reportCache.set(date, j.html);
     body.innerHTML = j.html;
   } catch {
-    body.innerHTML = `<p class="empty">${esc(date)} の日報を読めなかった。オフラインで未取得かもしれない。</p>`;
+    body.innerHTML = `<p class="empty">${esc(date)} の日報を読み込めませんでした。オフラインで未取得かもしれません。</p>`;
   }
 }
 
@@ -388,8 +392,8 @@ async function boot() {
   const [s, p] = await Promise.all([get("data/summary.json"), get("data/prices.json")]);
   if (!s) {
     $("#books").innerHTML =
-      `<p class="empty">データを読めなかった。まだ一度もセッションが走っていないか、オフラインで未取得。</p>`;
-    $("#updated").textContent = "データなし";
+      `<p class="empty">データを読み込めませんでした。まだ一度もセッションが走っていないか、オフラインで未取得です。</p>`;
+    $("#updated").textContent = "データがありません";
     $("#pulse").classList.add("stale");
     return;
   }
