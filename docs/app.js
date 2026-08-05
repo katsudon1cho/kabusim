@@ -350,7 +350,36 @@ function render() {
   renderLog();
 }
 
+/* ホーム画面から起動しているときだけ拡大操作を止めます。
+   ブラウザで開いたときは通常どおり拡大できるままにします。 */
+function setupStandalone() {
+  const standalone = window.navigator.standalone === true ||
+    window.matchMedia("(display-mode: standalone)").matches;
+  if (!standalone) return;
+
+  document.documentElement.classList.add("standalone");
+
+  const vp = document.querySelector('meta[name="viewport"]');
+  if (vp) {
+    vp.setAttribute("content",
+      "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover");
+  }
+
+  // iOS のピンチは touch ではなく gesture イベントで来るので個別に止めます
+  ["gesturestart", "gesturechange", "gestureend"].forEach((t) =>
+    document.addEventListener(t, (e) => e.preventDefault(), { passive: false }));
+
+  // touch-action だけでは残る端末があるため、素早い2回目のタップも抑えます
+  let lastTap = 0;
+  document.addEventListener("touchend", (e) => {
+    const now = Date.now();
+    if (now - lastTap < 300) e.preventDefault();
+    lastTap = now;
+  }, { passive: false });
+}
+
 async function boot() {
+  setupStandalone();
   setupTabs();
   const get = (u) => fetch(u, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
   const [s, p] = await Promise.all([get("data/summary.json"), get("data/prices.json")]);

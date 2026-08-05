@@ -26,10 +26,34 @@
           Consolas, "DejaVu Sans Mono", monospace;
 
   --wrap: 40rem;
+  --tap: 44px;          /* iOS の推奨タップ領域 */
 }
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; background: var(--bg); }
+
+/* 操作要素はタップ遅延と誤ズームを避ける */
+button, .tr.tap, [data-filter] { touch-action: manipulation; }
+
+/* ホーム画面から起動しているときだけ、拡大操作を止める。
+   ブラウザで開いたときは通常どおり拡大できる */
+html.standalone, html.standalone body { touch-action: pan-x pan-y; }
+html.standalone { -webkit-touch-callout: none; }
+/* 操作部分だけ選択不可にする。理由や日報の本文は選べるままにする */
+html.standalone .tabs, html.standalone .ivs,
+html.standalone .daterail, html.standalone .back,
+html.standalone .tr, html.standalone .topbar {
+  -webkit-user-select: none; user-select: none;
+}
+
+/* 小さいチップ類は、見た目を変えずに当たり判定だけ 44px まで広げる。
+   横方向は隣と重ならないよう要素の幅に収める */
+.ivs > button, .ivs > [data-filter], .daterail button { position: relative; }
+.ivs > button::before, .ivs > [data-filter]::before, .daterail button::before {
+  content: ""; position: absolute;
+  left: 0; right: 0; top: 50%;
+  height: var(--tap); transform: translateY(-50%);
+}
 
 body {
   margin: 0;
@@ -82,16 +106,18 @@ header, nav, main, footer { max-width: var(--wrap); margin-inline: auto; }
 /* ---------------- タブ（下線式） ---------------- */
 
 .tabs {
-  display: flex; gap: 1.15rem;
-  padding: 0 .7rem;
+  display: flex; gap: .35rem;
+  padding: 0 .45rem;
   border-bottom: 1px solid var(--line2);
   position: sticky; top: 0; z-index: 20;
   background: var(--bg);
 }
 .tabs button {
   appearance: none; border: 0; background: none; cursor: pointer;
-  padding: .5rem 0 .45rem;
-  font-family: inherit; font-size: .78rem; font-weight: 600;
+  min-height: var(--tap); min-width: 56px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 .55rem;
+  font-family: inherit; font-size: .84rem; font-weight: 600;
   color: var(--dim);
   position: relative;
   transition: color .18s;
@@ -162,7 +188,8 @@ main { padding-bottom: 1.5rem; }
 .tr {
   display: grid; grid-template-columns: 1fr auto auto;
   gap: .55rem; align-items: center;
-  padding: .5rem .7rem;
+  min-height: 52px;
+  padding: .55rem .7rem;
   border-bottom: 1px solid var(--line);
   font-size: .74rem;
 }
@@ -200,29 +227,34 @@ main { padding-bottom: 1.5rem; }
 .legend .k2 i { background: var(--dim); }
 .legend .sp { margin-left: auto; }
 
-/* 期間チップ */
+/* 期間チップ。見た目は小さいままで、当たり判定は 44px 確保する */
 .ivs {
-  display: flex; gap: .1rem; padding: .35rem .7rem;
-  font-family: var(--mono); font-size: .6rem;
+  display: flex; gap: .35rem; padding: .45rem .7rem;
+  font-family: var(--mono); font-size: .68rem;
 }
-.ivs span, .ivs button {
+.ivs > button, .ivs > [data-filter] {
   appearance: none; border: 0; background: none; cursor: pointer;
   font: inherit; color: var(--dim);
-  padding: .12rem .42rem; border-radius: 2px;
+  min-height: 32px; min-width: 48px;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: .25rem .6rem; border-radius: 3px;
   transition: .15s;
 }
-.ivs span.on, .ivs button.on { background: var(--accent-bg); color: var(--accent); }
+.ivs > .on { background: var(--accent-bg); color: var(--accent); }
 .ivs .rchg {
   margin-left: auto; padding-right: 0; cursor: default;
   font-weight: 600; font-variant-numeric: tabular-nums;
+  display: inline-flex; align-items: center;
 }
 
 /* ---------------- 個別銘柄 ---------------- */
 
 .back {
   appearance: none; cursor: pointer; background: none; border: 0;
-  padding: .55rem .7rem .3rem;
-  color: var(--dim); font-family: var(--mono); font-size: .64rem;
+  min-height: var(--tap);
+  display: inline-flex; align-items: center;
+  padding: 0 .7rem;
+  color: var(--dim); font-family: var(--mono); font-size: .74rem;
 }
 
 .dhead { padding: 0 .7rem .2rem; }
@@ -246,15 +278,17 @@ main { padding-bottom: 1.5rem; }
 /* ---------------- 日報 ---------------- */
 
 .daterail {
-  display: flex; gap: .3rem; overflow-x: auto;
+  display: flex; gap: .4rem; overflow-x: auto;
   padding: .5rem .7rem; scrollbar-width: none;
   border-bottom: 1px solid var(--line);
 }
 .daterail::-webkit-scrollbar { display: none; }
 .daterail button {
   flex: none; appearance: none; cursor: pointer;
-  font-family: var(--mono); font-size: .62rem;
-  padding: .2rem .45rem; border-radius: 2px;
+  font-family: var(--mono); font-size: .72rem;
+  min-height: 36px; min-width: 56px;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: .25rem .6rem; border-radius: 3px;
   color: var(--dim); background: var(--panel); border: 0;
 }
 .daterail button.on { background: var(--accent-bg); color: var(--accent); }

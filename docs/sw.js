@@ -2,7 +2,7 @@
    圏外でも直近に開いた内容が読める状態を保つのが目的。 */
 
 // 見た目を作り替えたら必ず上げること。上げないと端末に古い外殻が残り続ける。
-const VERSION = "v6";
+const VERSION = "v7";
 const SHELL = `shell-${VERSION}`;
 const DATA = `data-${VERSION}`;
 
