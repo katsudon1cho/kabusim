@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>デザイン案 30〜35（既存の株アプリを模す）— 仮想運用記録</title>
+<meta name="color-scheme" content="dark">
+<style>
+:root{
+  --g-bg:#141414;--g-card:#1c1c1c;--g-line:#2c2c2c;--g-tx:#e9e9e6;--g-dim:#8d8d87;
+  --g-sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic UI","Noto Sans JP",sans-serif;
+  --g-mono:ui-monospace,SFMono-Regular,"SF Mono","Cascadia Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:0 1rem 4rem;background:var(--g-bg);color:var(--g-tx);font-family:var(--g-sans);line-height:1.75}
+.wrap{max-width:78rem;margin-inline:auto}
+.intro{padding:2.5rem 0 1rem;max-width:44rem}
+.intro h1{margin:0 0 .6rem;font-size:1.5rem}
+.intro p{margin:.6rem 0;color:var(--g-dim);font-size:.9rem}
+.intro a{color:#7fb2ff}
+.note{background:var(--g-card);border:1px solid var(--g-line);border-left:3px solid #7fb2ff;
+  padding:1rem 1.25rem;margin:1.4rem 0 2.4rem;max-width:44rem;font-size:.85rem;color:#c2c2bd}
+.note b{color:var(--g-tx)}
+
+.gal{display:grid;gap:2.6rem;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));align-items:start}
+.demo{min-width:0}
+.demo-h{display:flex;align-items:baseline;gap:.6rem;margin-bottom:.15rem}
+.demo-n{font-family:var(--g-mono);font-size:.7rem;color:var(--g-dim)}
+.demo-h h2{margin:0;font-size:1.02rem}
+.demo>p{margin:.1rem 0 .5rem;font-size:.8rem;color:var(--g-dim);line-height:1.65}
+.ref{margin:0 0 .9rem;font-size:.74rem;color:#7fb2ff;border-left:2px solid #7fb2ff55;padding-left:.6rem;line-height:1.6}
+
+.frame{width:100%;max-width:375px;height:680px;overflow:hidden;border:9px solid #2a2a2a;border-radius:34px;
+  box-shadow:0 18px 50px #0009}
+.frame>.app{width:100%;height:100%;overflow-y:auto;scrollbar-width:none;position:relative;
+  display:flex;flex-direction:column}
+.frame>.app::-webkit-scrollbar{display:none}
+.scroll{flex:1;overflow-y:auto;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+svg{display:block;max-width:100%}
+
+/* ============ 案30 iSPEED（楽天証券）風 ============ */
+.m30{background:#0a0a0a;color:#e8e8e8;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+.m30 .bar{background:#bf0000;color:#fff;padding:.55rem .8rem;display:flex;justify-content:space-between;
+  align-items:center;font-size:.82rem;font-weight:700}
+.m30 .bar .sub{font-size:.58rem;font-weight:400;opacity:.85;font-family:var(--g-mono)}
+.m30 .tot{padding:.85rem .8rem;border-bottom:1px solid #232323}
+.m30 .tot .k{font-size:.58rem;color:#8a8a8a}
+.m30 .tot .v{font-size:1.75rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.m30 .tot .d{font-size:.78rem;font-family:var(--g-mono);font-variant-numeric:tabular-nums}
+.m30 .up{color:#ff3b30}.m30 .dn{color:#00b26b}   /* 日本式: 上げ赤・下げ緑 */
+.m30 .sec{background:#161616;padding:.3rem .8rem;font-size:.6rem;color:#9a9a9a;letter-spacing:.06em;
+  border-top:1px solid #232323;border-bottom:1px solid #232323}
+.m30 .row{display:grid;grid-template-columns:1fr auto auto;gap:.2rem .7rem;padding:.55rem .8rem;
+  border-bottom:1px solid #1c1c1c;align-items:center}
+.m30 .nm{font-size:.82rem;font-weight:600;line-height:1.3}
+.m30 .cd{font-family:var(--g-mono);font-size:.58rem;color:#8a8a8a}
+.m30 .pz{font-family:var(--g-mono);font-size:.95rem;font-variant-numeric:tabular-nums;text-align:right}
+.m30 .ch{font-family:var(--g-mono);font-size:.7rem;font-variant-numeric:tabular-nums;text-align:right;min-width:64px}
+.m30 .board{padding:.5rem .8rem;border-bottom:1px solid #1c1c1c}
+.m30 .bt{display:grid;grid-template-columns:1fr 62px 1fr;font-family:var(--g-mono);font-size:.62rem;
+  font-variant-numeric:tabular-nums;text-align:center}
+.m30 .bt div{padding:.13rem 0}
+.m30 .bt .px{color:#d8d8d8;background:#151515}
+.m30 .bt .sell{color:#00b26b;text-align:right;padding-right:.5rem}
+.m30 .bt .buy{color:#ff3b30;text-align:left;padding-left:.5rem}
+.m30 .tabs{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid #232323;background:#111}
+.m30 .tabs div{text-align:center;padding:.5rem 0 .55rem;font-size:.55rem;color:#8a8a8a}
+.m30 .tabs div.on{color:#ff3b30}
+.m30 .tabs i{display:block;width:15px;height:15px;margin:0 auto .18rem;border:1.4px solid currentColor;border-radius:3px}
+
+/* ============ 案31 SBI証券風 ============ */
+.m31{background:#f4f6f9;color:#1a2330;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+.m31 .bar{background:#003f8e;color:#fff;padding:.6rem .8rem;font-size:.85rem;font-weight:700;
+  display:flex;justify-content:space-between;align-items:center}
+.m31 .bar .sub{font-size:.58rem;font-weight:400;opacity:.9}
+.m31 .strip{background:#e8edf5;padding:.5rem .8rem;display:flex;justify-content:space-between;
+  font-size:.62rem;color:#41546b;border-bottom:1px solid #cfd9e6}
+.m31 .strip b{font-family:var(--g-mono);color:#1a2330;font-variant-numeric:tabular-nums}
+.m31 .panel{background:#fff;margin:.6rem;border:1px solid #d3dbe6;border-radius:3px}
+.m31 .ph{background:#f0f4f9;border-bottom:1px solid #d3dbe6;padding:.4rem .65rem;font-size:.68rem;
+  font-weight:700;color:#003f8e}
+.m31 .kv{display:flex;justify-content:space-between;padding:.45rem .65rem;font-size:.75rem;
+  border-bottom:1px solid #edf1f6;font-variant-numeric:tabular-nums}
+.m31 .kv:last-child{border-bottom:0}
+.m31 .kv .k{color:#5a6b80}
+.m31 .kv b{font-family:var(--g-mono);font-weight:700}
+.m31 .big{font-size:1.5rem;font-family:var(--g-mono);font-weight:700}
+.m31 table{width:100%;border-collapse:collapse;font-size:.66rem;font-variant-numeric:tabular-nums}
+.m31 th{background:#f0f4f9;color:#41546b;font-weight:700;padding:.32rem .5rem;text-align:right;
+  border-bottom:1px solid #d3dbe6;font-size:.6rem}
+.m31 th:first-child,.m31 td:first-child{text-align:left}
+.m31 td{padding:.42rem .5rem;text-align:right;border-bottom:1px solid #edf1f6;font-family:var(--g-mono)}
+.m31 tr:nth-child(even) td{background:#fafbfd}
+.m31 .up{color:#d1002b}.m31 .dn{color:#0057c8}   /* 日本式: 上げ赤・下げ青 */
+.m31 .tabs{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid #cfd9e6;background:#fff}
+.m31 .tabs div{text-align:center;padding:.5rem 0 .55rem;font-size:.55rem;color:#5a6b80}
+.m31 .tabs div.on{color:#003f8e;font-weight:700}
+.m31 .tabs i{display:block;width:15px;height:15px;margin:0 auto .18rem;border:1.4px solid currentColor;border-radius:3px}
+
+/* ============ 案32 Webull / moomoo 風 ============ */
+.m32{background:#0b0e11;color:#d6dae0;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+.m32 .hd{padding:.6rem .7rem .4rem}
+.m32 .tk{font-size:.95rem;font-weight:700;letter-spacing:.01em}
+.m32 .sub{font-size:.55rem;color:#6d7683;font-family:var(--g-mono)}
+.m32 .px{display:flex;align-items:baseline;gap:.5rem;margin-top:.2rem}
+.m32 .px .n{font-size:1.75rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.m32 .px .c{font-family:var(--g-mono);font-size:.78rem;font-variant-numeric:tabular-nums}
+.m32 .up{color:#00c076}.m32 .dn{color:#ff4d4f}   /* 米国式: 上げ緑・下げ赤 */
+.m32 .ivs{display:flex;gap:.05rem;padding:.35rem .7rem;font-family:var(--g-mono);font-size:.58rem}
+.m32 .ivs span{padding:.15rem .42rem;color:#6d7683;border-radius:2px}
+.m32 .ivs span.on{background:#1b2430;color:#4a9eff}
+.m32 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.05rem;background:#151a20;margin:.3rem 0}
+.m32 .cell{background:#0b0e11;padding:.35rem .55rem}
+.m32 .cell .k{font-size:.52rem;color:#6d7683}
+.m32 .cell .v{font-family:var(--g-mono);font-size:.7rem;font-variant-numeric:tabular-nums;margin-top:.05rem}
+.m32 .tbl{padding:0 .7rem}
+.m32 .tr{display:grid;grid-template-columns:1fr auto auto;gap:.6rem;padding:.4rem 0;
+  border-bottom:1px solid #151a20;font-size:.7rem;align-items:center}
+.m32 .tr .s{font-weight:700}
+.m32 .tr .s small{display:block;font-size:.52rem;color:#6d7683;font-weight:400}
+.m32 .tr .p{font-family:var(--g-mono);font-variant-numeric:tabular-nums;text-align:right}
+.m32 .chip{font-family:var(--g-mono);font-size:.62rem;padding:.12rem .4rem;border-radius:3px;
+  min-width:56px;text-align:center;color:#fff}
+.m32 .chip.up{background:#00c076}.m32 .chip.dn{background:#ff4d4f}
+.m32 .sect{font-size:.55rem;color:#6d7683;padding:.5rem .7rem .2rem;letter-spacing:.1em}
+
+/* ============ 案33 TradingView 風 ============ */
+.m33{background:#131722;color:#d1d4dc;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+.m33 .top{display:flex;align-items:center;gap:.5rem;padding:.45rem .6rem;border-bottom:1px solid #2a2e39;
+  font-size:.72rem}
+.m33 .top .s{font-weight:700}
+.m33 .top .p{margin-left:auto;font-family:var(--g-mono);font-variant-numeric:tabular-nums}
+.m33 .up{color:#26a69a}.m33 .dn{color:#ef5350}
+.m33 .ivs{display:flex;gap:.1rem;padding:.35rem .6rem;border-bottom:1px solid #2a2e39;
+  font-family:var(--g-mono);font-size:.6rem}
+.m33 .ivs span{padding:.14rem .4rem;border-radius:3px;color:#787b86}
+.m33 .ivs span.on{background:#2962ff;color:#fff}
+.m33 .body{display:flex;flex:1;min-height:0}
+.m33 .tools{width:30px;border-right:1px solid #2a2e39;padding:.35rem 0;display:flex;
+  flex-direction:column;align-items:center;gap:.5rem}
+.m33 .tools i{width:14px;height:14px;border:1.3px solid #787b86;border-radius:2px;display:block}
+.m33 .tools i.on{border-color:#2962ff}
+.m33 .chartarea{flex:1;min-width:0;padding:.3rem .2rem}
+.m33 .legend{font-family:var(--g-mono);font-size:.55rem;color:#787b86;padding:0 .3rem .2rem}
+.m33 .foot{border-top:1px solid #2a2e39;padding:.4rem .6rem;font-family:var(--g-mono);font-size:.58rem;
+  color:#787b86;display:flex;justify-content:space-between}
+.m33 .panel{border-top:1px solid #2a2e39;padding:.5rem .6rem}
+.m33 .pr{display:flex;justify-content:space-between;font-size:.68rem;padding:.22rem 0;
+  font-variant-numeric:tabular-nums}
+.m33 .pr b{font-family:var(--g-mono)}
+
+/* ============ 案34 ロボアド風 ============ */
+.m34{background:#f7f9f8;color:#20302c;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+.m34 .app{padding:1.3rem 1.1rem}
+.m34 .hi{font-size:.72rem;color:#6b7d78}
+.m34 .goal{font-size:1.02rem;font-weight:700;margin:.15rem 0 1.1rem}
+.m34 .ring{display:block;margin:0 auto}
+.m34 .center{text-align:center;margin-top:-118px;margin-bottom:70px}
+.m34 .center .n{font-size:1.75rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.m34 .center .k{font-size:.6rem;color:#6b7d78}
+.m34 .center .d{font-size:.75rem;color:#2e9e78;font-variant-numeric:tabular-nums;margin-top:.1rem}
+.m34 .card{background:#fff;border-radius:16px;padding:.95rem 1rem;margin-bottom:.65rem;
+  box-shadow:0 1px 3px #0000000d}
+.m34 .card .k{font-size:.6rem;color:#6b7d78;letter-spacing:.04em}
+.m34 .card .v{font-size:1.15rem;font-weight:700;font-variant-numeric:tabular-nums;margin-top:.1rem}
+.m34 .lgd{display:flex;align-items:center;gap:.5rem;padding:.4rem 0;font-size:.75rem}
+.m34 .lgd i{width:9px;height:9px;border-radius:50%;flex:none}
+.m34 .lgd .p{margin-left:auto;font-family:var(--g-mono);font-variant-numeric:tabular-nums;color:#6b7d78}
+.m34 .msg{background:#e8f4ef;border-radius:14px;padding:.85rem .95rem;font-size:.78rem;
+  line-height:1.7;color:#2c453d;margin-top:.4rem}
+
+/* ============ 案35 Cash App Investing 風 ============ */
+.m35{background:#000;color:#fff;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+.m35 .app{padding:1.6rem 1.2rem}
+.m35 .k{font-size:.68rem;color:#7b7b7b;letter-spacing:.02em}
+.m35 .huge{font-size:3.3rem;font-weight:800;letter-spacing:-.055em;line-height:1;margin:.35rem 0 .3rem;
+  font-variant-numeric:tabular-nums}
+.m35 .d{font-size:1rem;font-weight:700;color:#00d632;font-variant-numeric:tabular-nums}
+.m35 .d.dn{color:#ff4f4f}
+.m35 .chart{margin:1.6rem 0 1.2rem}
+.m35 .chart path{stroke:#00d632;stroke-width:2.6;fill:none;stroke-linejoin:round;stroke-linecap:round}
+.m35 .ivs{display:flex;justify-content:space-between;font-size:.78rem;color:#7b7b7b;font-weight:600;
+  padding:0 .1rem 1.4rem}
+.m35 .ivs b{color:#00d632}
+.m35 .li{display:flex;align-items:center;gap:.75rem;padding:.85rem 0;border-top:1px solid #1a1a1a}
+.m35 .ic{width:34px;height:34px;border-radius:50%;background:#1a1a1a;flex:none;display:grid;
+  place-items:center;font-size:.62rem;font-weight:800;color:#00d632}
+.m35 .li .t{flex:1}
+.m35 .li .t .a{font-size:.92rem;font-weight:700}
+.m35 .li .t .b{font-size:.68rem;color:#7b7b7b}
+.m35 .li .r{text-align:right;font-variant-numeric:tabular-nums}
+.m35 .li .r .a{font-size:.92rem;font-weight:700}
+.m35 .li .r .b{font-size:.7rem;color:#00d632}
+.m35 .li .r .b.dn{color:#ff4f4f}
+.m35 .btn{margin-top:1.5rem;background:#00d632;color:#000;border-radius:999px;text-align:center;
+  padding:.85rem;font-weight:800;font-size:.92rem}
+
+@media(max-width:700px){.gal{grid-template-columns:1fr}.frame{height:640px;margin-inline:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="intro">
+  <h1>デザイン案 30〜35</h1>
+  <p>既存の株アプリの画面設計を参照した6案。
+     <a href="mockups.html">1〜7</a> ／ <a href="mockups2.html">8〜12</a> ／
+     <a href="mockups3.html">13〜18</a> ／ <a href="mockups4.html">19〜23</a> ／
+     <a href="mockups5.html">24〜29</a></p>
+</div>
+
+<div class="note">
+  <b>色の向きが国で逆になります。</b> 日本の証券アプリ（案30・31）は<b>上げが赤、下げが青か緑</b>。
+  米国系（案32・33・35）は<b>上げが緑、下げが赤</b>。同じ数字でも真逆の色になるので、
+  日米どちらの慣習に合わせるかは決めておく必要があります。今の本番画面は米国式です。
+  <br><br>
+  なお、これらは各アプリの<b>画面構成と配色の作法を運用記録に当てはめた翻案</b>です。
+  ロゴや実際の素材は使っていません。
+</div>
+
+<div class="gal" id="gal"></div>
+
+</div>
+
+<script>
+const MINE  = [46,44,48,40,43,36,38,30,33,26,28,20,24,16,18,12,14,8,10,5];
+const P = a => a.map((y,i) => (i?"L":"M") + i*14 + " " + y).join(" ");
+
+/* ローソク足。決まった種から作るので毎回同じ形になる */
+function candles(n, w, h, upC, dnC, volH) {
+  let s = 17; const r = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  const bw = w / n, bars = [];
+  let p = h * 0.72;
+  for (let i = 0; i < n; i++) {
+    const o = p, c = Math.max(h * 0.12, Math.min(h * 0.86, p + (r() - 0.54) * h * 0.11));
+    const hi = Math.min(o, c) - r() * h * 0.04, lo = Math.max(o, c) + r() * h * 0.04;
+    bars.push({ o, c, hi, lo, x: i * bw + bw / 2, up: c < o, v: 0.25 + r() * 0.75 });
+    p = c;
+  }
+  const body = bars.map(b => {
+    const col = b.up ? upC : dnC;
+    const top = Math.min(b.o, b.c), ht = Math.max(1.2, Math.abs(b.c - b.o));
+    return `<line x1="${b.x.toFixed(1)}" y1="${b.hi.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.lo.toFixed(1)}" stroke="${col}" stroke-width=".8"/>
+      <rect x="${(b.x - bw * .3).toFixed(1)}" y="${top.toFixed(1)}" width="${(bw * .6).toFixed(1)}" height="${ht.toFixed(1)}" fill="${col}"/>`;
+  }).join("");
+  const vol = volH ? bars.map(b =>
+    `<rect x="${(b.x - bw * .3).toFixed(1)}" y="${(h + volH - b.v * volH).toFixed(1)}"
+       width="${(bw * .6).toFixed(1)}" height="${(b.v * volH).toFixed(1)}"
+       fill="${b.up ? upC : dnC}" opacity=".45"/>`).join("") : "";
+  return `<svg viewBox="0 0 ${w} ${h + (volH || 0)}" style="width:100%;height:auto">${body}${vol}</svg>`;
+}
+
+const DESIGNS = [
+
+["iSPEED（楽天証券）風",
+ "黒地に楽天レッドの帯。銘柄コードと名称、現在値、前日比が1行に詰まる。板情報の並びをそのまま持ち込み、下部に5つのタブを置く。上げが赤、下げが緑。",
+ "参照: 楽天証券 iSPEED（黒地・ブランドの赤帯・高密度の銘柄行・板情報・下部5タブ）",
+`<div class="bar"><span>仮想運用記録</span><span class="sub">08/06 09:15 更新</span></div>
+ <div class="scroll">
+   <div class="tot">
+     <div class="k">米国株ブック 評価額</div>
+     <div class="v">$51,240 <span class="d up">+1,240 (+2.48%)</span></div>
+     <div class="k" style="margin-top:.3rem">S&P500 +1.92% ／ 差 <span class="up">+0.56pt</span></div>
+   </div>
+   <div class="sec">保有銘柄</div>
+   <div class="row"><div><div class="nm">イーライリリー</div><div class="cd">LLY</div></div>
+     <div class="pz">1,164.7</div><div class="ch up">+3.5<br>+0.30%</div></div>
+   <div class="row"><div><div class="nm">エヌビディア</div><div class="cd">NVDA</div></div>
+     <div class="pz">181.7</div><div class="ch dn">−2.2<br>−1.20%</div></div>
+   <div class="row"><div><div class="nm">ビザ</div><div class="cd">V</div></div>
+     <div class="pz">323.3</div><div class="ch up">+5.7<br>+1.80%</div></div>
+   <div class="sec">日本株ブック</div>
+   <div class="row"><div><div class="nm">トヨタ自動車</div><div class="cd">7203</div></div>
+     <div class="pz">2,918.5</div><div class="ch up">+60.0<br>+2.10%</div></div>
+   <div class="row"><div><div class="nm">第一三共</div><div class="cd">4568</div></div>
+     <div class="pz">2,500.0</div><div class="ch dn">−20.0<br>−0.80%</div></div>
+   <div class="sec">板情報 7203</div>
+   <div class="board"><div class="bt">
+     <div class="sell">12,400</div><div class="px">2,921</div><div></div>
+     <div class="sell">8,100</div><div class="px">2,920</div><div></div>
+     <div class="sell">3,300</div><div class="px">2,919</div><div></div>
+     <div></div><div class="px">2,918</div><div class="buy">5,600</div>
+     <div></div><div class="px">2,917</div><div class="buy">9,900</div>
+     <div></div><div class="px">2,916</div><div class="buy">14,200</div>
+   </div></div>
+   <div class="sec">直近の判断</div>
+   <div class="row" style="grid-template-columns:1fr"><div style="font-size:.74rem;line-height:1.7">
+     <span class="up" style="font-weight:700">買 LLY 3株</span> @1,163.89<br>
+     <span style="color:#9a9a9a">上方修正の規模に対し株価反応が控えめ。織り込み不足と判断。</span>
+   </div></div>
+ </div>
+ <div class="tabs"><div class="on"><i></i>ホーム</div><div><i></i>登録銘柄</div>
+   <div><i></i>チャート</div><div><i></i>資産</div><div><i></i>メニュー</div></div>`],
+
+["SBI証券風",
+ "白地に紺のヘッダー。パネルを積み、表で見せる。交互の行背景、細い罫線、太めの等幅数字。派手さを避けた堅実な作り。上げが赤、下げが青。",
+ "参照: SBI証券アプリ（白地・紺のヘッダー・パネルと表中心・交互行・下部5タブ）",
+`<div class="bar"><span>仮想運用記録</span><span class="sub">08/06 09:15</span></div>
+ <div class="strip"><span>S&P500 <b class="up">+1.92%</b></span><span>TOPIX <b class="up">+2.01%</b></span>
+   <span>USD/JPY <b>147.20</b></span></div>
+ <div class="scroll">
+   <div class="panel">
+     <div class="ph">米国株ブック</div>
+     <div class="kv"><span class="k">評価額</span><b class="big">$51,240</b></div>
+     <div class="kv"><span class="k">評価損益</span><b class="up">+$1,240（+2.48%）</b></div>
+     <div class="kv"><span class="k">S&P500 との差</span><b class="up">+0.56pt</b></div>
+     <div class="kv"><span class="k">現金比率</span><b>24.4%</b></div>
+     <div class="kv"><span class="k">本日の買付余力</span><b>1 / 4 件</b></div>
+   </div>
+   <div class="panel">
+     <div class="ph">保有銘柄一覧</div>
+     <table>
+       <tr><th>銘柄</th><th>数量</th><th>現在値</th><th>損益率</th></tr>
+       <tr><td>LLY</td><td>3</td><td>1,164.7</td><td class="up">+0.30</td></tr>
+       <tr><td>NVDA</td><td>12</td><td>181.7</td><td class="dn">−1.20</td></tr>
+       <tr><td>V</td><td>9</td><td>323.3</td><td class="up">+1.80</td></tr>
+       <tr><td>XOM</td><td>18</td><td>108.0</td><td class="dn">−0.40</td></tr>
+     </table>
+   </div>
+   <div class="panel">
+     <div class="ph">日本株ブック</div>
+     <table>
+       <tr><th>銘柄</th><th>数量</th><th>現在値</th><th>損益率</th></tr>
+       <tr><td>7203 トヨタ</td><td>300</td><td>2,918.5</td><td class="up">+2.10</td></tr>
+       <tr><td>4568 第一三共</td><td>200</td><td>2,500.0</td><td class="dn">−0.80</td></tr>
+     </table>
+   </div>
+   <div class="panel">
+     <div class="ph">直近の注文</div>
+     <div class="kv"><span class="k">08/06 01:13</span><b class="up">買 LLY 3株 約定</b></div>
+     <div class="kv"><span class="k">08/05 09:15</span><b class="dn">買 6861 却下</b></div>
+   </div>
+ </div>
+ <div class="tabs"><div class="on"><i></i>ホーム</div><div><i></i>保有</div>
+   <div><i></i>取引</div><div><i></i>マーケット</div><div><i></i>メニュー</div></div>`],
+
+["Webull / moomoo 風",
+ "海外のデータ重視型。極小の文字で情報を敷き詰め、ローソク足と出来高を並べ、始値・高値・安値・出来高・PERなどを格子に押し込む。上げが緑、下げが赤。",
+ "参照: Webull / moomoo（#0b0e11 の地・極小文字・高密度の数値格子・ローソク足と出来高・時間足チップ）",
+`<div class="hd">
+   <div class="tk">LLY <span class="sub">Eli Lilly and Co · NYSE</span></div>
+   <div class="px"><span class="n up">1,164.72</span><span class="c up">+3.48 (+0.30%)</span></div>
+   <div class="sub">保有 3株 · 簿価 1,163.89 · 評価 3,494.16</div>
+ </div>
+ <div class="ivs"><span>1m</span><span>5m</span><span class="on">1D</span><span>1W</span><span>1M</span><span>1Y</span></div>
+ <div style="padding:0 .3rem">${candles(46, 340, 128, "#00c076", "#ff4d4f", 34)}</div>
+ <div class="grid">
+   <div class="cell"><div class="k">始値</div><div class="v">1,161.24</div></div>
+   <div class="cell"><div class="k">高値</div><div class="v up">1,171.08</div></div>
+   <div class="cell"><div class="k">安値</div><div class="v dn">1,157.60</div></div>
+   <div class="cell"><div class="k">出来高</div><div class="v">2.41M</div></div>
+   <div class="cell"><div class="k">時価総額</div><div class="v">1.10T</div></div>
+   <div class="cell"><div class="k">PER</div><div class="v">62.4</div></div>
+   <div class="cell"><div class="k">52週高</div><div class="v">1,203.0</div></div>
+   <div class="cell"><div class="k">52週安</div><div class="v">712.4</div></div>
+   <div class="cell"><div class="k">配当</div><div class="v">0.52%</div></div>
+ </div>
+ <div class="sect">ポートフォリオ</div>
+ <div class="tbl">
+   <div class="tr"><span class="s">LLY<small>3株 · 7.0%</small></span><span class="p">3,494</span><span class="chip up">+0.30%</span></div>
+   <div class="tr"><span class="s">NVDA<small>12株 · 4.3%</small></span><span class="p">2,180</span><span class="chip dn">−1.20%</span></div>
+   <div class="tr"><span class="s">V<small>9株 · 5.7%</small></span><span class="p">2,910</span><span class="chip up">+1.80%</span></div>
+   <div class="tr"><span class="s">CASH<small>24.4%</small></span><span class="p">12,480</span><span class="chip" style="background:#2a3441">—</span></div>
+ </div>
+ <div class="sect">VS S&P500</div>
+ <div class="tbl"><div class="tr"><span class="s">差<small>開始来</small></span><span class="p">+0.56pt</span><span class="chip up">勝ち</span></div></div>`],
+
+["TradingView 風",
+ "チャートが画面の主役。上部に銘柄と期間、左に描画ツール、下に価格と時間の軸。分析のための画面で、資産や保有は下に押し込まれる。",
+ "参照: TradingView（#131722 の地・#2962ff のアクセント・期間チップ・左の描画ツール列・ローソク足）",
+`<div class="top"><span class="s">LLY</span><span style="color:#787b86;font-size:.6rem">NYSE · 1D</span>
+   <span class="p up">1,164.72 +0.30%</span></div>
+ <div class="ivs"><span>1m</span><span>5m</span><span>1h</span><span class="on">1D</span><span>1W</span><span>1M</span>
+   <span style="margin-left:auto;color:#2962ff">指標</span></div>
+ <div class="body">
+   <div class="tools"><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+   <div class="chartarea">
+     <div class="legend">LLY · D · 開 1161.24  高 1171.08  安 1157.60  終 1164.72</div>
+     ${candles(40, 300, 170, "#26a69a", "#ef5350", 40)}
+   </div>
+ </div>
+ <div class="foot"><span>08:30</span><span>11:00</span><span>13:30</span><span>16:00</span></div>
+ <div class="panel">
+   <div class="pr"><span>ポジション</span><b>3株 @1,163.89</b></div>
+   <div class="pr"><span>評価損益</span><b class="up">+$15.51 (+0.30%)</b></div>
+   <div class="pr"><span>比率 / 上限</span><b>7.0% / 25%</b></div>
+ </div>
+ <div class="panel">
+   <div class="pr"><span>ブック</span><b>$51,240 <span class="up">+2.48%</span></b></div>
+   <div class="pr"><span>S&P500</span><b>+1.92%</b></div>
+   <div class="pr"><span>差</span><b class="up">+0.56pt</b></div>
+ </div>`],
+
+["ロボアド風（ウェルスナビ / Betterment）",
+ "個別の値動きより「目標に対してどこまで来たか」を見せる型。大きなドーナツ、穏やかな配色、丸みのあるカード。煽らない設計で、長期保有を前提にしている。",
+ "参照: ウェルスナビ / Betterment（淡い緑地・大きなドーナツ・丸いカード・目標ベースの表示・低彩度）",
+`<div class="app">
+   <div class="hi">2026年の運用</div>
+   <div class="goal">S&P500 を上回る</div>
+   <svg class="ring" width="200" height="200" viewBox="0 0 200 200">
+     <circle cx="100" cy="100" r="82" fill="none" stroke="#e2ebe7" stroke-width="15"/>
+     <circle cx="100" cy="100" r="82" fill="none" stroke="#2e9e78" stroke-width="15"
+             stroke-linecap="round" stroke-dasharray="515" stroke-dashoffset="470"
+             transform="rotate(-90 100 100)"/>
+   </svg>
+   <div class="center">
+     <div class="k">S&P500 との差</div>
+     <div class="n">+0.56pt</div>
+     <div class="d">22 / 250 営業日</div>
+   </div>
+   <div class="card">
+     <div class="k">評価額</div>
+     <div class="v">$51,240</div>
+     <div class="lgd" style="padding-top:.5rem"><i style="background:#2e9e78"></i>株式
+       <span class="p">75.6%</span></div>
+     <div class="lgd"><i style="background:#8fc7ae"></i>現金<span class="p">24.4%</span></div>
+   </div>
+   <div class="card">
+     <div class="k">今日の動き</div>
+     <div class="v">売買なし</div>
+     <div class="msg">前提は崩れていないと判断しました。調べたうえで動かないことも、
+       この運用では正常な結果です。</div>
+   </div>
+ </div>`],
+
+["Cash App Investing 風",
+ "情報を極限まで削る型。黒地に巨大な数字と緑1色、太い折れ線、丸いアイコン。1画面で分かることを4つに絞り、それ以外は出さない。",
+ "参照: Cash App Investing（純黒・#00D632 の緑1色・極端に大きな太字・丸いアイコン・大きな丸ボタン）",
+`<div class="app">
+   <div class="k">米国株ブック</div>
+   <div class="huge">$51,240</div>
+   <div class="d">+$1,240 · +2.48%</div>
+   <div class="chart"><svg viewBox="0 0 266 70" preserveAspectRatio="none" style="width:100%;height:96px">
+     <path d="${P(MINE.map(v => v * 1.25))}"/></svg></div>
+   <div class="ivs"><span>1D</span><span>1W</span><span>1M</span><b>1Y</b><span>ALL</span></div>
+   <div class="li"><span class="ic">LLY</span><span class="t"><span class="a">Eli Lilly</span>
+     <span class="b">3株</span></span><span class="r"><span class="a">$3,494</span>
+     <span class="b">+0.30%</span></span></div>
+   <div class="li"><span class="ic">NVDA</span><span class="t"><span class="a">NVIDIA</span>
+     <span class="b">12株</span></span><span class="r"><span class="a">$2,180</span>
+     <span class="b dn">−1.20%</span></span></div>
+   <div class="li"><span class="ic">$</span><span class="t"><span class="a">現金</span>
+     <span class="b">24.4%</span></span><span class="r"><span class="a">$12,480</span></span></div>
+   <div class="btn">S&P500 に +0.56pt</div>
+ </div>`],
+];
+
+document.getElementById("gal").innerHTML = DESIGNS.map((d,i) => `
+  <section class="demo">
+    <div class="demo-h"><span class="demo-n">案${i+30}</span><h2>${d[0]}</h2></div>
+    <p>${d[1]}</p>
+    <p class="ref">${d[2]}</p>
+    <div class="frame m${i+30}"><div class="app">${d[3]}</div></div>
+  </section>`).join("");
+</script>
+</body>
+</html>
