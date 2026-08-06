@@ -379,6 +379,48 @@ def cmd_screen(args) -> None:
         print()
 
 
+def cmd_clock(args) -> None:
+    """いま各市場が開いているかを出す。
+
+    定時実行は数時間ずれることがあり、セッション名（寄り付き後／引け前）と
+    実際の市場の状態が食い違う。名前ではなく事実を渡すためのもの。
+    祝日は見ていないので、休場日は値が動かないことで気づくしかない。
+    """
+    t = now()
+    wd = "月火水木金土日"[t.weekday()]
+    print(f"現在 {t:%Y-%m-%d %H:%M} JST（{wd}）")
+    if t.weekday() >= 5:
+        print("  土日のため日米とも休場です")
+        return
+
+    mins = t.hour * 60 + t.minute
+
+    def span(label, phases):
+        for lo, hi, name, closing in phases:
+            if lo <= mins < hi:
+                tail = f"（引けまで{hi - mins}分）" if closing else ""
+                return f"  {label}: {name}{tail}"
+        return None
+
+    jp = span("日本市場", [
+        (0, 9 * 60, "寄り付き前", False),
+        (9 * 60, 11 * 60 + 30, "前場", False),
+        (11 * 60 + 30, 12 * 60 + 30, "昼休み", False),
+        (12 * 60 + 30, 15 * 60 + 30, "後場", True),
+        (15 * 60 + 30, 24 * 60, "引け後", False),
+    ])
+    # 夏時間の米国市場は JST 22:30〜翌05:00。冬は1時間後ろ
+    us = span("米国市場", [
+        (0, 5 * 60, "取引時間中", True),
+        (5 * 60, 21 * 60, "閉場", False),
+        (21 * 60, 22 * 60 + 30, "寄り付き前", False),
+        (22 * 60 + 30, 24 * 60, "取引時間中", False),
+    ])
+    for line in (jp, us):
+        if line:
+            print(line)
+
+
 def cmd_universe(args) -> None:
     """ユニバースの銘柄が実際に買えるか点検する。
 
@@ -589,10 +631,11 @@ if __name__ == "__main__":
     j.add_argument("--full", action="store_true", help="セッション要約を全文表示する")
     sub.add_parser("snapshot")
     sub.add_parser("universe")
+    sub.add_parser("clock")
 
     a = p.parse_args()
     {"init": cmd_init, "status": cmd_status, "quote": cmd_quote,
-     "history": cmd_history, "screen": cmd_screen,
+     "history": cmd_history, "screen": cmd_screen, "clock": cmd_clock,
      "journal": cmd_journal, "snapshot": cmd_snapshot,
      "universe": cmd_universe}.get(
         a.cmd, lambda x: cmd_trade(x, a.cmd.upper()))(a)

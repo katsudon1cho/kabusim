@@ -33,10 +33,17 @@ if [ -z "$SESSION" ]; then
   echo "使い方: ./session.sh {jp-open|jp-close|us-open|us-close|report}" >&2
   exit 1
 fi
-STAMP=$(TZ=Asia/Tokyo date +%Y-%m-%d_%H%M)
-NOW=$(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M')
-TODAY=$(TZ=Asia/Tokyo date +%F)
 mkdir -p logs reports
+
+# 時刻は Python で出す。環境によっては bash の date が Asia/Tokyo を解決できず
+# UTC を返す（Git Bash がそうで、9時間ずれる）。
+read -r TODAY HHMM NOW_MIN <<EOF
+$("$PYTHON" -c "from datetime import datetime, timezone, timedelta
+t = datetime.now(timezone(timedelta(hours=9)))
+print(t.strftime('%Y-%m-%d'), t.strftime('%H:%M'), t.hour * 60 + t.minute)")
+EOF
+NOW="$TODAY $HHMM"
+STAMP="${TODAY}_${HHMM/:/}"
 
 # セッション名だけ渡しても、実際に何時に走ったかが分からない。
 # GitHub のスケジュールは数時間ずれることがあり、jp-open が12:45に走った例もある。
@@ -56,18 +63,23 @@ case "$SESSION" in
 esac
 
 # 予定との差を分で出す。日付をまたぐセッションがあるので折り返す
-now_min=$(( 10#$(TZ=Asia/Tokyo date +%H) * 60 + 10#$(TZ=Asia/Tokyo date +%M) ))
 sch_min=$(( 10#${SCHED%%:*} * 60 + 10#${SCHED##*:} ))
-DELAY=$(( now_min - sch_min ))
+DELAY=$(( NOW_MIN - sch_min ))
 [ "$DELAY" -lt -720 ] && DELAY=$(( DELAY + 1440 ))
 [ "$DELAY" -gt 720 ] && DELAY=$(( DELAY - 1440 ))
 
+# セッション名（寄り付き後／引け前）は予定であって事実ではない。
+# 実際に市場が開いているかを渡して、名前ではなく現実に合わせて判断させる。
+MARKET=$("$PYTHON" broker.py clock 2>/dev/null || echo "現在 ${NOW} JST")
+
 if [ "$DELAY" -ge 20 ]; then
   TIMING="予定 ${SCHED} に対して実際は ${NOW}（約${DELAY}分の遅れ）。
-セッション名が想定する市場の状態と実際がずれている可能性があります。
-セッション名ではなく、実際の時刻と \`broker.py history\` で確かめた値動きを優先してください。"
+${MARKET}
+**セッション名が示す市場の状態は当てになりません。** 上の実際の状態に合わせて
+判断してください。値動きは \`broker.py history\` で確かめること。"
 else
-  TIMING="予定 ${SCHED} / 実行 ${NOW}。"
+  TIMING="予定 ${SCHED} / 実行 ${NOW}。
+${MARKET}"
 fi
 
 if [ "$SESSION" = "report" ]; then

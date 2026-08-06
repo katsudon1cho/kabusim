@@ -23,6 +23,7 @@ python broker.py status              # 現在の保有・現金・ベンチマ�
 python broker.py quote AAPL 7203.T   # 現在値と前日比
 python broker.py history LLY         # 騰落率(1日/1週/1月/3月/1年)・52週レンジ・直近10日
 python broker.py screen --book jp    # 値動きが大きい/決算が前後している銘柄だけを抽出
+python broker.py clock               # 現在時刻と、日米市場が開いているか
 python broker.py universe            # 売買可能な銘柄と、買えなくなった銘柄
 python broker.py buy AAPL 10 --reason "理由"
 python broker.py sell 7203.T 100 --reason "理由"
@@ -40,9 +41,12 @@ python broker.py journal --days 7    # 過去の判断と約定（既定は要�
 `us-open` / `us-close` は米国株ブックだけを扱ってください。
 `report` は両ブックが対象で、進め方が違います（末尾の「日報」の項）。
 
-プロンプトには**予定時刻と実際の実行時刻**が入ります。定時実行は数時間ずれることがあります。
-**遅れが大きいときは、セッション名が想定する市場の状態を鵜呑みにしないこと。**
-実際の時刻と `broker.py history` で確かめた値動きを優先してください。
+プロンプトには**予定時刻・実際の実行時刻・そのときの市場の状態**が入ります。
+定時実行は数時間ずれることがあり、`jp-open` が後場に走ることもあります。
+
+**セッション名は予定であって事実ではありません。** 名前が「寄り付き後」でも、
+実際は引け間際かもしれません。プロンプトの市場状態と `broker.py clock` を信じてください。
+値動きは `broker.py history` で確かめること。
 
 1. `broker.py status` で現状を把握する
 2. `broker.py journal --days 7` で直近の自分の判断を読み返す。
