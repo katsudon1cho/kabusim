@@ -14,7 +14,16 @@ name: kabusim session
 # 分を 0/15/30/45 から外してあるのは意図的。GitHub のスケジュールは
 # ベストエフォートで、混雑する丁度の時刻ほど遅延・間引きが大きい。
 # 実測では最大3時間半ずれた（jp-open が 09:15 予定に対し 12:45 起動）。
-# 時刻の正確さが要るなら、下の repository_dispatch を外部から叩くこと。
+#
+# 実運用は外部の定時実行から tick を投げる方式（下の repository_dispatch）。
+# 上の schedule は外部が止まったときの保険として残してある。
+#
+#   tick は1日5回だけ飛んでくる。どのセッションかは JST の「時」で決める:
+#     04時 → us-close   06時 → report   09時 → jp-open
+#     14時 → jp-close   22時 → us-open
+#   曜日の判定もここで行う（日本市場ぶんは月〜金、米国の引け由来は火〜土）。
+#   外部側にジョブを5本作るとトークンを5回入力することになり、
+#   夏時間の切り替えも5箇所に散る。1本に集約してコード側で捌く。
 
 on:
   schedule:
@@ -27,7 +36,7 @@ on:
   # 外部の定時実行サービスから叩くための入口。スケジュールの遅延を避けたい
   # ときに使う。payload に {"session":"jp-open"} を渡す。
   repository_dispatch:
-    types: [session]
+    types: [session, tick]
 
   workflow_dispatch:
     inputs:
@@ -60,17 +69,41 @@ jobs:
       - name: セッション種別を決める
         id: sess
         run: |
-          case "${{ github.event.schedule }}" in
-            "8 0 * * 1-5")   S=jp-open  ;;
-            "38 5 * * 1-5")  S=jp-close ;;
-            "52 13 * * 1-5") S=us-open  ;;
-            "8 19 * * 1-5")  S=us-close ;;
-            "53 20 * * 1-5") S=report   ;;
-            *) S="${{ github.event.client_payload.session || inputs.session }}" ;;
-          esac
-          if [ -z "$S" ]; then echo "セッション種別を決められない" >&2; exit 1; fi
+          # tick は外部の定時実行から1日5回だけ飛んでくる合図。
+          # どのセッションかは時刻から決める。外部側にジョブを5本作ると
+          # トークンを5回入力することになり、曜日や夏時間の直しも5箇所に散る。
+          if [ "${{ github.event.action }}" = "tick" ]; then
+            H=$(TZ=Asia/Tokyo date +%H)
+            D=$(TZ=Asia/Tokyo date +%u)     # 1=月 … 7=日
+            case "$H" in
+              04) S=us-close ;;
+              06) S=report   ;;
+              09) S=jp-open  ;;
+              14) S=jp-close ;;
+              22) S=us-open  ;;
+              *)  S=""       ;;
+            esac
+            # 日本市場ぶんは月〜金。米国の引け由来（日本時間の早朝）は火〜土
+            case "$S" in
+              jp-open|jp-close|us-open)
+                if [ "$D" -ge 6 ]; then S=""; fi ;;
+              us-close|report)
+                if [ "$D" -eq 1 ] || [ "$D" -eq 7 ]; then S=""; fi ;;
+            esac
+            [ -z "$S" ] && echo "この時刻・曜日に該当するセッションはありません（$H時 / 曜日$D）"
+          else
+            case "${{ github.event.schedule }}" in
+              "8 0 * * 1-5")   S=jp-open  ;;
+              "38 5 * * 1-5")  S=jp-close ;;
+              "52 13 * * 1-5") S=us-open  ;;
+              "8 19 * * 1-5")  S=us-close ;;
+              "53 20 * * 1-5") S=report   ;;
+              *) S="${{ github.event.client_payload.session || inputs.session }}" ;;
+            esac
+            if [ -z "$S" ]; then echo "セッション種別を決められない" >&2; exit 1; fi
+          fi
           echo "session=$S" >> "$GITHUB_OUTPUT"
-          echo "セッション: $S"
+          echo "セッション: ${S:-（なし）}"
 
       - uses: actions/setup-python@v5
         with:
@@ -87,6 +120,7 @@ jobs:
           npm install -g @anthropic-ai/claude-code
 
       - name: 台帳の存在確認
+        if: steps.sess.outputs.session != ''
         run: |
           if [ ! -f state.json ]; then
             echo "state.json が無い。先に broker.py init を実行してコミットすること。" >&2
@@ -94,10 +128,10 @@ jobs:
           fi
 
       - name: セッション実行
+        if: steps.sess.outputs.session != ''
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           PYTHON: python
-          MAX_TURNS: "40"
         run: bash session.sh "${{ steps.sess.outputs.session }}"
 
       # セッションが途中で落ちても、それまでに成立した約定は state.json に
@@ -105,7 +139,7 @@ jobs:
       # クールダウンや約定数が現実とズレるので always() で必ず残す。
       # 画面用データ（docs/data/）はデプロイ時に作り直すのでコミットしない。
       - name: 記録をコミット
-        if: always()
+        if: always() && steps.sess.outputs.session != ''
         run: |
           git config user.name "kabusim-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
