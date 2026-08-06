@@ -403,6 +403,7 @@ async function refresh() {
   // 読み込み中は紙面を降ろしたまま保持し、リングを回す
   const ptr = $("#ptr");
   ptrPlace(PTR_TRIGGER, true);
+  ptr.classList.remove("ready");
   ptr.style.transform = `translateY(${PTR_TRIGGER / 2 - 13}px)`;
   ptr.classList.add("spin");
 
@@ -410,8 +411,8 @@ async function refresh() {
     .then((r) => (r.ok ? r.json() : null)).catch(() => null);
   const t0 = Date.now();
   const [s, p] = await Promise.all([get("data/summary.json"), get("data/prices.json")]);
-  // 一瞬で終わると更新されたのか分からないので、最低限は回す
-  await new Promise((r) => setTimeout(r, Math.max(0, 450 - (Date.now() - t0))));
+  // 一瞬で消えると更新されたのか分からないので最低限は回す。長いと待たされ感が出る
+  await new Promise((r) => setTimeout(r, Math.max(0, 280 - (Date.now() - t0))));
 
   if (s) DATA = s;
   if (p) PX = p;
@@ -427,29 +428,51 @@ async function refresh() {
 
 const PTR_TRIGGER = 64;
 
-/* 紙面を d px 下げ、空いた隙間の中央にリングを置く */
+/* 紙面を d px 下げ、空いた隙間の中央にリングを置く。
+   スタイルの書き込みは1フレームに1回に抑える（触るたびに書くと再計算が重なる） */
 function ptrPlace(d, ease) {
   const ptr = $("#ptr"), shell = $("#shell");
+  const p = Math.min(1, d / PTR_TRIGGER);
   shell.classList.toggle("ease", !!ease);
   ptr.classList.toggle("ease", !!ease);
-  shell.style.transform = `translateY(${d}px)`;
+  ptr.classList.toggle("ready", p >= 1 && !refreshing);
+  shell.style.transform = `translateY(${d.toFixed(1)}px)`;
   ptr.style.transform =
-    `translateY(${Math.max(0, d / 2 - 13).toFixed(1)}px) rotate(${(d * 4).toFixed(0)}deg)`;
-  ptr.style.opacity = String(Math.min(1, d / PTR_TRIGGER));
+    `translateY(${Math.max(0, d / 2 - 13).toFixed(1)}px) rotate(${(p * 360).toFixed(0)}deg)`;
+  ptr.style.opacity = p.toFixed(2);
 }
 
 function setupPullToRefresh() {
   const ptr = $("#ptr"), shell = $("#shell");
-  const MAX = 96, TRIGGER = PTR_TRIGGER;
-  let startY = 0, startX = 0, dist = 0, active = false;
+  const TRIGGER = PTR_TRIGGER, MAX = 120;
+  let startY = 0, startX = 0, dist = 0, active = false, frame = 0, want = 0;
 
-  const place = ptrPlace;
-  const reset = () => { active = false; dist = 0; place(0, true); };
+  // しきい値までは指に1:1で付いてくる。超えてから重くする。
+  // 最初から割り算すると、指の半分しか動かず追従感が出ない。
+  const damp = (dy) => (dy <= TRIGGER ? dy : TRIGGER + (dy - TRIGGER) * 0.4);
 
-  // 戻りきったら transform を外す。残しておくと sticky の基準がずれる
-  shell.addEventListener("transitionend", () => {
-    if (!active && !refreshing && shell.style.transform === "translateY(0px)") {
+  const paint = () => { frame = 0; ptrPlace(want, false); };
+  const schedule = (d) => {
+    want = d;
+    if (!frame) frame = requestAnimationFrame(paint);
+  };
+  const stop = () => { if (frame) { cancelAnimationFrame(frame); frame = 0; } };
+  const reset = () => {
+    stop(); active = false; dist = 0;
+    ptr.classList.remove("ready");
+    ptrPlace(0, true);
+  };
+
+  // 戻りきったら transform と合成層のヒントを外す。
+  // 残しておくと変形した祖先が containing block になり sticky の基準がずれ、
+  // 合成層も抱えたままになる。
+  // 文字列で比較しないこと。ブラウザが translateY(0.0px) を 0px に正規化する。
+  shell.addEventListener("transitionend", (e) => {
+    if (e.propertyName !== "transform" || active || refreshing) return;
+    const m = /translateY\(([-\d.]+)px\)/.exec(shell.style.transform);
+    if (m && Math.abs(parseFloat(m[1])) < 0.5) {
       shell.style.transform = "";
+      shell.style.willChange = "";
       shell.classList.remove("ease");
     }
   });
@@ -459,6 +482,8 @@ function setupPullToRefresh() {
     startY = e.touches[0].clientY;
     startX = e.touches[0].clientX;
     active = true; dist = 0;
+    shell.style.willChange = "transform";
+    shell.classList.remove("ease");
     ptr.classList.remove("ease");
   }, { passive: true });
 
@@ -469,12 +494,13 @@ function setupPullToRefresh() {
     // 横スワイプ（日付の列など）では反応させない
     if (dy <= 0 || Math.abs(dx) > Math.abs(dy) || window.scrollY > 0) { reset(); return; }
     e.preventDefault();                  // 端末側の跳ね返りを止める
-    dist = Math.min(MAX, dy * 0.45);     // 引くほど重くする
-    place(dist);
+    dist = Math.min(MAX, damp(dy));
+    schedule(dist);
   }, { passive: false });
 
   document.addEventListener("touchend", async () => {
     if (!active) return;
+    stop();
     const go = dist >= TRIGGER;
     active = false;
     if (go) { await refresh(); }

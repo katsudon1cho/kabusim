@@ -40,9 +40,11 @@ html, body { overscroll-behavior-y: contain; }
 
 /* ---------------- 引っぱって更新 ---------------- */
 
-/* 引いた分だけ紙面ごと下げる。丸だけが降りてくると操作と噛み合わない */
-.shell { will-change: transform; }
-.shell.ease { transition: transform .3s cubic-bezier(.2,.8,.3,1); }
+/* 引いた分だけ紙面ごと下げる。丸だけが降りてくると操作と噛み合わない。
+   will-change は指を触れている間だけ JS が付ける（常時だと合成層を抱え続ける） */
+.shell.ease, .ptr.ease {
+  transition: transform .24s cubic-bezier(.22,1,.36,1), opacity .18s linear;
+}
 
 .ptr {
   position: fixed; z-index: 40;
@@ -57,10 +59,14 @@ html, body { overscroll-behavior-y: contain; }
   border-radius: 50%;
   border: 2px solid var(--line2);
   border-top-color: var(--accent);
+  transition: border-color .12s;
 }
-/* 指を離したあとは自分で戻る。引いている最中は JS が直接動かす */
-.ptr.ease { transition: transform .28s cubic-bezier(.2,.8,.3,1), opacity .28s; }
-.ptr.spin i { animation: ptrspin .7s linear infinite; }
+/* しきい値に届いたら手を離してよいことを色で示す */
+.ptr.ready i { border-color: var(--accent); border-top-color: var(--accent); }
+.ptr.spin i {
+  border-color: var(--line2); border-top-color: var(--accent);
+  animation: ptrspin .62s linear infinite;
+}
 @keyframes ptrspin { to { transform: rotate(360deg); } }
 
 /* 操作要素はタップ遅延と誤ズームを避ける */
