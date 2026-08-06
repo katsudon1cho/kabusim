@@ -63,8 +63,11 @@ RAW="$(mktemp)"
 trap 'rm -f "$RAW"' EXIT
 
 set +e
+# Write(reports/*) だけだとパターンが一致せず、日報の書き込みで許可を求めて
+# 止まっていた（無人なので誰も答えられない）。再帰形も並べておく。
 claude -p "$PROMPT" \
-  --allowedTools "Bash($PYTHON broker.py:*)" "WebSearch" "WebFetch" "Read" "Write(reports/*)" \
+  --allowedTools "Bash($PYTHON broker.py:*)" "WebSearch" "WebFetch" "Read" \
+                 "Write(reports/**)" "Write(reports/*)" "Edit(reports/**)" \
   --max-turns "$MAX_TURNS" \
   --output-format json \
   >"$RAW" 2>>"logs/${SESSION}.log"

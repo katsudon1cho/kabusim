@@ -287,9 +287,21 @@ def cmd_journal(args) -> None:
         return print("記録なし")
     cutoff = now() - timedelta(days=args.days)
     for line in JOURNAL.read_text(encoding=ENC).splitlines():
+        if not line.strip():
+            continue
         e = json.loads(line)
         if datetime.fromisoformat(e["ts"]) < cutoff:
             continue
+
+        # セッションの結論。売買しなかった回もここに残る
+        if e["status"] == "SESSION":
+            head = f"{e['ts'][:16]} ◆ {e.get('session', '?')}"
+            print(f"{head}  （{e.get('turns', '?')}ターン）")
+            for ln in (e.get("summary") or "").splitlines():
+                print(f"    {ln}")
+            print()
+            continue
+
         mark = "✓" if e["status"] == "FILLED" else "✗"
         px = f"@{e['price']:,.2f}" if e["price"] else ""
         tail = e["reason"] if e["status"] == "FILLED" else e["error"]

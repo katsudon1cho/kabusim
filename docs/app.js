@@ -259,7 +259,24 @@ function openDetail(tk, bkey) {
 function renderLog() {
   const list = DATA.trades.filter((t) => logFilter === "all" || t.status === logFilter);
   if (!list.length) { $("#ledger").innerHTML = `<p class="empty">該当する記録がありません。</p>`; return; }
+
   $("#ledger").innerHTML = list.map((t) => {
+    const when = esc(t.ts.slice(5, 16).replace("T", " "));
+
+    // セッションの結論。売買しなかった回もここに出る
+    if (t.status === "SESSION") {
+      return `
+      <li class="ses${t.ok === false ? " ng" : ""}">
+        <div class="f-r1">
+          <span class="f-side SES">${esc(t.session || "session")}</span>
+          <span class="f-qty">${t.turns ? `${t.turns}ターン` : ""}${t.ok === false ? " · 失敗" : ""}</span>
+          <span class="f-when">${when}</span>
+        </div>
+        <div class="ses-body clamp">${t.html || `<p>${esc(t.summary || "—")}</p>`}</div>
+        <button class="more" type="button">続きを読む</button>
+      </li>`;
+    }
+
     const ok = t.status === "FILLED";
     return `
     <li class="${ok ? "ok" : "ng"}">
@@ -267,11 +284,36 @@ function renderLog() {
         <span class="f-side ${esc(t.side)}">${esc(t.side)}</span>
         <span class="f-tk">${esc(t.ticker)}</span>
         <span class="f-qty">${nf.format(t.shares)}株${t.price ? ` @${nf1.format(t.price)}` : ""}</span>
-        <span class="f-when">${esc(t.ts.slice(5, 16).replace("T", " "))}</span>
+        <span class="f-when">${when}</span>
       </div>
       <p class="f-why ${ok ? "" : "ng"}">${esc((ok ? t.reason : t.error) || "—")}</p>
     </li>`;
   }).join("");
+
+  $("#ledger").querySelectorAll(".more").forEach((b) => {
+    const body = b.previousElementSibling;
+    b.onclick = () => {
+      const folded = body.classList.toggle("clamp");
+      body.dataset.open = folded ? "" : "1";
+      b.textContent = folded ? "続きを読む" : "閉じる";
+    };
+  });
+  syncMore();
+}
+
+/* 「続きを読む」を出すかどうかは、実際に畳まれているときだけ決められる。
+   line-clamp は overflow を作らないので scrollHeight では判定できず、
+   パネルが非表示だと高さが全部0になるので、表示された後に測り直す。 */
+function syncMore() {
+  $("#ledger").querySelectorAll(".more").forEach((b) => {
+    const body = b.previousElementSibling;
+    if (body.dataset.open === "1") { b.hidden = false; return; }
+    const clamped = body.clientHeight;
+    body.classList.remove("clamp");
+    const full = body.clientHeight;
+    body.classList.add("clamp");
+    b.hidden = clamped === 0 || full <= clamped + 4;
+  });
 }
 
 /* ---------------- 日報 ---------------- */
@@ -302,6 +344,7 @@ const PANELS = ["view-overview", "view-holdings", "view-reports", "view-log", "v
 
 function showPanel(id) {
   PANELS.forEach((p) => { document.getElementById(p).hidden = p !== id; });
+  if (id === "view-log") syncMore();     // 表示されてから高さを測る
   window.scrollTo({ top: 0, behavior: "instant" });
 }
 

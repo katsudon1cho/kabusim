@@ -32,6 +32,9 @@
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; background: var(--bg); }
 
+/* display を指定した要素は hidden 属性が効かなくなる。全体で優先させる */
+[hidden] { display: none !important; }
+
 /* 操作要素はタップ遅延と誤ズームを避ける */
 button, .tr.tap, [data-filter] { touch-action: manipulation; }
 
@@ -358,6 +361,39 @@ main { padding-bottom: 1.5rem; }
 .f-when { margin-left: auto; font-size: .56rem; color: var(--faint); }
 .f-why { margin: .3rem 0 0; font-size: .72rem; line-height: 1.65; color: #A9B3C0; }
 .f-why.ng { color: var(--faint); }
+
+/* セッションの結論。売買が無くても残る記録なので、注文とは別の色で示す */
+.feed > li.ses { border-left-color: var(--accent); }
+.feed > li.ses.ng { border-left-color: var(--dn); }
+.f-side.SES { color: var(--accent); background: var(--accent-bg); }
+
+.ses-body { margin-top: .35rem; font-size: .72rem; line-height: 1.7; color: #A9B3C0; }
+.ses-body.clamp {
+  display: -webkit-box; -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6; overflow: hidden;
+}
+.ses-body p { margin: .3rem 0; }
+.ses-body ul, .ses-body ol { margin: .3rem 0; padding-left: 1rem; }
+.ses-body li { margin: .12rem 0; }
+.ses-body li::marker { color: var(--faint); }
+.ses-body strong { color: var(--text); font-weight: 700; }
+.ses-body em { color: var(--dim); font-style: normal; }
+.ses-body h1, .ses-body h2, .ses-body h3 {
+  font-size: .76rem; margin: .5rem 0 .2rem; color: var(--text);
+}
+.ses-body code {
+  font-family: var(--mono); font-size: .82em;
+  background: var(--panel); padding: .05em .28em; border-radius: 2px;
+}
+.ses-body table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: .62rem; }
+.ses-body th, .ses-body td { padding: .2rem .35rem; border-bottom: 1px solid var(--line); text-align: left; }
+
+.more {
+  appearance: none; border: 0; background: none; cursor: pointer;
+  min-height: var(--tap); display: flex; align-items: center;
+  padding: 0; margin-top: .1rem;
+  color: var(--accent); font-family: var(--mono); font-size: .64rem;
+}
 
 /* ---------------- 足 ---------------- */
 

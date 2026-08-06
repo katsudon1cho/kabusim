@@ -219,6 +219,11 @@ def read_series():
 
 
 def read_trades(limit=400):
+    """注文とセッションの結論を、時系列でひとまとめに返す。
+
+    売買しなかったセッションも SESSION 行として入っているので、
+    「調べたうえで見送った」も履歴に残る。
+    """
     if not broker.JOURNAL.exists():
         return []
     out = []
@@ -230,7 +235,11 @@ def read_trades(limit=400):
             e = json.loads(line)
         except json.JSONDecodeError:
             continue
-        e["book"] = broker.book_of(e.get("ticker", ""))
+        if e.get("status") == "SESSION":
+            # 要約は Markdown で書かれてくるので、日報と同じ変換をかける
+            e["html"] = md_to_html(e.get("summary") or "")
+        else:
+            e["book"] = broker.book_of(e.get("ticker", ""))
         out.append(e)
     out.reverse()                              # 新しい順
     return out[:limit]
