@@ -7,6 +7,14 @@ name: deploy pages
 
 on:
   workflow_call:
+    inputs:
+      # 配信の失敗を、呼び出し元の実行の失敗として扱うか。
+      # prices は配信そのものが目的なので既定の true。セッションは売買の判断が
+      # 目的で、配信は付随作業にすぎない。Pages が詰まっただけで実行が赤くなると
+      # 「セッションが失敗した」と読めてしまい、成否の表示が信用できなくなる。
+      fail_on_error:
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -50,5 +58,18 @@ jobs:
         with:
           path: docs
 
+      # 既定のタイムアウトは600秒。Pages 側が詰まると1回の失敗に10分かかり、
+      # concurrency: pages で直列化しているぶん後続の配信も待たされる。
+      # 正常時の所要は45秒程度なので、3分で見切る。
       - id: dep
         uses: actions/deploy-pages@v4
+        continue-on-error: ${{ !inputs.fail_on_error }}
+        with:
+          timeout: 180000
+
+      # continue-on-error で握りつぶした場合でも outcome には残るので、
+      # 失敗したこと自体はログの注釈として必ず見えるようにする。
+      - name: 配信の失敗を注釈として残す
+        if: steps.dep.outcome == 'failure'
+        run: |
+          echo "::warning::GitHub Pages への配信に失敗しました。台帳・判断の記録・日報には影響しません（画面の更新だけが止まります）"

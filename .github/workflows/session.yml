@@ -170,3 +170,8 @@ jobs:
     needs: session
     if: always()
     uses: ./.github/workflows/deploy-pages.yml
+    # 配信が失敗してもセッションの成否は汚さない。ここが赤くなると
+    # 「売買の判断が失敗した」と読めてしまう。実際 8/6 の us-open は
+    # 判断も記録も成功していたのに、Pages の詰まりだけで failure になった。
+    with:
+      fail_on_error: false
