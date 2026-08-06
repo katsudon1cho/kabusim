@@ -19,6 +19,11 @@ export PYTHONUTF8=1
 # 暴走時の上限。CI では特に効かせておきたい。
 MAX_TURNS="${MAX_TURNS:-40}"
 
+# 評価期間が1年あるので、途中でモデルが入れ替わると判断の記録を横並びで
+# 比較できなくなる。エイリアス(opus)ではなく正式名で固定しておく。
+MODEL="${MODEL:-claude-opus-5}"
+EFFORT="${EFFORT:-high}"
+
 # ${1:?メッセージ} は使わないこと。メッセージ中に { } があると bash が最初の }
 # で展開を打ち切り、余った } が値に連結される（"us-open}" になって全部落ちた）。
 SESSION="${1-}"
@@ -68,6 +73,8 @@ set +e
 claude -p "$PROMPT" \
   --allowedTools "Bash($PYTHON broker.py:*)" "WebSearch" "WebFetch" "Read" \
                  "Write(reports/**)" "Write(reports/*)" "Edit(reports/**)" \
+  --model "$MODEL" \
+  --effort "$EFFORT" \
   --max-turns "$MAX_TURNS" \
   --output-format json \
   >"$RAW" 2>>"logs/${SESSION}.log"

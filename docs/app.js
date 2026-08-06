@@ -25,6 +25,7 @@ const BENCH_LABEL = { "SPY": "S&P500", "1306.T": "TOPIX" };
 const benchName = (t) => (BENCH_LABEL[t] ? `${BENCH_LABEL[t]}（${t}）` : t);
 
 let DATA = null, PX = null, RANGE = "1d", CURRENT = null, logFilter = "all";
+let selectedReport = null, refreshing = false;
 
 /* 台帳側と価格側を合成します。価格側のほうが新しいのでそちらを優先 */
 function book(b) {
@@ -322,6 +323,7 @@ const reportCache = new Map();
 
 async function showReport(date) {
   const body = $("#report-body");
+  selectedReport = date;
   [...document.querySelectorAll("#daterail button")].forEach((b) =>
     b.classList.toggle("on", b.dataset.date === date));
   if (!date) { body.innerHTML = `<p class="empty">まだ日報がありません。最初の report セッションで書かれます。</p>`; return; }
@@ -388,9 +390,78 @@ function render() {
   const rail = $("#daterail");
   rail.innerHTML = DATA.reports.map((d) => `<button data-date="${d}">${d.slice(5)}</button>`).join("");
   rail.onclick = (e) => { const b = e.target.closest("button"); if (b) showReport(b.dataset.date); };
-  showReport(DATA.reports[0]);
+  // 更新のたびに最新へ飛ばされると読んでいた日報を見失うので、選択を保つ
+  showReport(DATA.reports.includes(selectedReport) ? selectedReport : DATA.reports[0]);
 
   renderLog();
+}
+
+/* 引っぱって更新。表示中のタブ・日報・フィルタはそのまま保つ */
+async function refresh() {
+  if (refreshing) return;
+  refreshing = true;
+  const ptr = $("#ptr");
+  ptr.classList.add("ease", "spin");
+  ptr.style.transform = "translateY(26px)";
+  ptr.style.opacity = "1";
+
+  const get = (u) => fetch(u, { cache: "reload" })
+    .then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  const t0 = Date.now();
+  const [s, p] = await Promise.all([get("data/summary.json"), get("data/prices.json")]);
+  // 一瞬で終わると更新されたのか分からないので、最低限は回す
+  await new Promise((r) => setTimeout(r, Math.max(0, 450 - (Date.now() - t0))));
+
+  if (s) DATA = s;
+  if (p) PX = p;
+  if (s || p) {
+    const active = PANELS.find((id) => !document.getElementById(id).hidden);
+    render();
+    if (active === "view-detail" && CURRENT) paintDetail();
+    if (active === "view-log") syncMore();
+  }
+  ptr.classList.remove("spin");
+  refreshing = false;
+}
+
+function setupPullToRefresh() {
+  const ptr = $("#ptr");
+  const MAX = 96, TRIGGER = 64;
+  let startY = 0, startX = 0, dist = 0, active = false;
+
+  const place = (d, ease) => {
+    ptr.classList.toggle("ease", !!ease);
+    ptr.style.transform = `translateY(${d - 38}px) rotate(${(d * 4).toFixed(0)}deg)`;
+    ptr.style.opacity = String(Math.min(1, d / TRIGGER));
+  };
+  const reset = () => { active = false; dist = 0; place(0, true); };
+
+  document.addEventListener("touchstart", (e) => {
+    if (refreshing || e.touches.length !== 1 || window.scrollY > 0) return;
+    startY = e.touches[0].clientY;
+    startX = e.touches[0].clientX;
+    active = true; dist = 0;
+    ptr.classList.remove("ease");
+  }, { passive: true });
+
+  document.addEventListener("touchmove", (e) => {
+    if (!active) return;
+    const dy = e.touches[0].clientY - startY;
+    const dx = e.touches[0].clientX - startX;
+    // 横スワイプ（日付の列など）では反応させない
+    if (dy <= 0 || Math.abs(dx) > Math.abs(dy) || window.scrollY > 0) { reset(); return; }
+    e.preventDefault();                  // 端末側の跳ね返りを止める
+    dist = Math.min(MAX, dy * 0.45);     // 引くほど重くする
+    place(dist);
+  }, { passive: false });
+
+  document.addEventListener("touchend", async () => {
+    if (!active) return;
+    const go = dist >= TRIGGER;
+    active = false;
+    if (go) { await refresh(); }
+    reset();
+  }, { passive: true });
 }
 
 /* ホーム画面から起動しているときだけ拡大操作を止めます。
@@ -424,6 +495,7 @@ function setupStandalone() {
 async function boot() {
   setupStandalone();
   setupTabs();
+  setupPullToRefresh();
   const get = (u) => fetch(u, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
   const [s, p] = await Promise.all([get("data/summary.json"), get("data/prices.json")]);
   if (!s) {

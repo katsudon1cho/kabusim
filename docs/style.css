@@ -35,6 +35,30 @@ html { -webkit-text-size-adjust: 100%; background: var(--bg); }
 /* display を指定した要素は hidden 属性が効かなくなる。全体で優先させる */
 [hidden] { display: none !important; }
 
+/* ブラウザ側の引っぱり更新を止める。自前のものと二重に効くため */
+html, body { overscroll-behavior-y: contain; }
+
+/* ---------------- 引っぱって更新 ---------------- */
+
+.ptr {
+  position: fixed; z-index: 40;
+  top: calc(6px + env(safe-area-inset-top)); left: 50%;
+  width: 26px; height: 26px; margin-left: -13px;
+  display: grid; place-items: center;
+  pointer-events: none;
+  opacity: 0; transform: translateY(-38px);
+}
+.ptr i {
+  display: block; width: 17px; height: 17px;
+  border-radius: 50%;
+  border: 2px solid var(--line2);
+  border-top-color: var(--accent);
+}
+/* 指を離したあとは自分で戻る。引いている最中は JS が直接動かす */
+.ptr.ease { transition: transform .28s cubic-bezier(.2,.8,.3,1), opacity .28s; }
+.ptr.spin i { animation: ptrspin .7s linear infinite; }
+@keyframes ptrspin { to { transform: rotate(360deg); } }
+
 /* 操作要素はタップ遅延と誤ズームを避ける */
 button, .tr.tap, [data-filter] { touch-action: manipulation; }
 
