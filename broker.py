@@ -164,6 +164,51 @@ def get_prices(tickers) -> dict:
     return {t: float(last[t]) for t in tickers if t in last and last[t] == last[t]}
 
 
+def daily(tickers, period="5d"):
+    """日足の終値を DataFrame（列=銘柄）で返す。前日比や騰落率の計算に使う。"""
+    tickers = sorted(set(t.upper() for t in tickers))
+    if os.environ.get("BROKER_OFFLINE"):
+        import pandas as pd
+        n = 300
+        return pd.DataFrame(
+            {t: [round(random.uniform(1000, 4000) if t.endswith(".T")
+                       else random.uniform(50, 500), 2) for _ in range(n)]
+             for t in tickers},
+            index=pd.date_range(end=now().date(), periods=n, freq="D"))
+    import yfinance as yf
+    df = yf.download(tickers, period=period, interval="1d",
+                     progress=False, auto_adjust=True)
+    # ここで ffill してはいけない。まだ値の無い当日の行が前日値で埋まり、
+    # 前日比がゼロになる。欠損は使う側が列ごとに dropna して落とす。
+    return df["Close"] if hasattr(df["Close"], "columns") else df["Close"].to_frame(tickers[0])
+
+
+def earnings_dates(tickers) -> dict:
+    """次の決算日を {銘柄: date} で返す。取れないものは None。
+
+    1銘柄あたり0.25秒ほどかかるので、ユニバース全体で10〜20秒。
+    """
+    if os.environ.get("BROKER_OFFLINE"):
+        return {t: None for t in tickers}
+    import yfinance as yf
+    out = {}
+    for t in tickers:
+        d = None
+        try:
+            cal = yf.Ticker(t).calendar or {}
+            v = cal.get("Earnings Date") if isinstance(cal, dict) else None
+            if isinstance(v, (list, tuple)) and v:
+                d = v[0]
+            elif v is not None:
+                d = v
+            if hasattr(d, "date"):
+                d = d.date()
+        except Exception:
+            d = None
+        out[t] = d
+    return out
+
+
 def all_tickers(s: dict) -> list:
     ts = set(US_UNIVERSE) | set(JP_UNIVERSE) | set(BENCH.values())
     for b in s["books"].values():
@@ -231,14 +276,107 @@ def cmd_status(args) -> None:
 
 
 def cmd_quote(args) -> None:
-    px = get_prices(args.tickers)
-    for t in sorted(px):
+    df = daily(args.tickers, "5d")
+    for t in sorted(df.columns):
+        s = df[t].dropna()
+        if s.empty:
+            continue
+        last = float(s.iloc[-1])
+        prev = float(s.iloc[-2]) if len(s) >= 2 else last
+        chg = (last / prev - 1) * 100 if prev else 0.0
         b = book_of(t)
         note = "" if t in universe(b) else "   ※ユニバース外（売買できない）"
-        print(f"{t:<8}{cur(b)}{px[t]:,.2f}{note}")
+        print(f"{t:<9}{cur(b)}{last:>11,.2f}  前日比 {chg:+6.2f}%{note}")
     for t in args.tickers:
-        if t.upper() not in px:
-            print(f"{t:<8}取得失敗")
+        if t.upper() not in df.columns:
+            print(f"{t:<9}取得失敗")
+
+
+def cmd_history(args) -> None:
+    """騰落率と52週レンジの中での位置を出す。
+
+    「動いた理由を調べてから判断する」ためには、まず動いたかどうかが
+    分からないといけない。現在値だけでは推測になる。
+    """
+    df = daily(args.tickers, "1y")
+    for t in sorted(df.columns):
+        s = df[t].dropna()
+        if s.empty:
+            continue
+        last, c = float(s.iloc[-1]), cur(book_of(t))
+        hi, lo = float(s.max()), float(s.min())
+
+        def ret(n):
+            return (last / float(s.iloc[-1 - n]) - 1) * 100 if len(s) > n else None
+
+        spans = [("1日", 1), ("1週", 5), ("1月", 21), ("3月", 63), ("1年", 251)]
+        parts = [f"{lab} {r:+.1f}%" for lab, n in spans if (r := ret(n)) is not None]
+        pos = (last - lo) / (hi - lo) * 100 if hi > lo else 50.0
+        print(f"{t}  {c}{last:,.2f}")
+        print(f"  騰落率  " + " / ".join(parts))
+        print(f"  52週    安 {c}{lo:,.2f} 〜 高 {c}{hi:,.2f}（現在は下から{pos:.0f}%の位置）")
+        recent = " ".join(f"{float(v):,.1f}" for v in s.iloc[-10:])
+        print(f"  直近10日 {recent}\n")
+    for t in args.tickers:
+        if t.upper() not in df.columns:
+            print(f"{t:<9}取得失敗")
+
+
+def cmd_screen(args) -> None:
+    """手順4の条件に当てはまる銘柄だけを絞り込む。
+
+    ユニバースが各ブック45銘柄あるので、全部を個別に調べることはできない。
+    条件をコード側で判定して、調べるべきものだけを出す。
+    """
+    s = load()
+    books = [args.book] if args.book else ["us", "jp"]
+    today = now().date()
+
+    for b in books:
+        u = universe(b)
+        held = set(s["books"][b]["positions"])
+        name = "米国株" if b == "us" else "日本株"
+        print(f"=== {name}ブック {len(u)}銘柄を絞り込み ===")
+
+        df = daily(u, "5d")
+        moves = {}
+        for t in u:
+            if t not in df.columns:
+                continue
+            col = df[t].dropna()
+            if len(col) < 2:
+                continue
+            moves[t] = (float(col.iloc[-1]),
+                        (float(col.iloc[-1]) / float(col.iloc[-2]) - 1) * 100)
+
+        eds = earnings_dates(u)
+        hits = []
+        for t, (px, chg) in moves.items():
+            flags = []
+            if abs(chg) >= args.move:
+                flags.append(f"値動き{chg:+.1f}%")
+            d = eds.get(t)
+            if d is not None:
+                days = (d - today).days
+                if 0 <= days <= 7:
+                    flags.append(f"決算{days}日後")
+                elif -3 <= days < 0:
+                    flags.append(f"決算{-days}日前に発表済")
+            if t in held:
+                flags.append("保有中")
+            if flags:
+                hits.append((abs(chg), t, px, chg, flags))
+
+        if not hits:
+            print(f"  条件に該当なし（値動き±{args.move}% / 決算が前後）\n")
+            continue
+
+        hits.sort(reverse=True)
+        for _, t, px, chg, flags in hits[:args.limit]:
+            print(f"  {t:<9}{cur(b)}{px:>11,.2f} {chg:+6.2f}%  {' / '.join(flags)}")
+        if len(hits) > args.limit:
+            print(f"  （該当 {len(hits)}件のうち値動きの大きい {args.limit}件を表示）")
+        print()
 
 
 def cmd_universe(args) -> None:
@@ -343,6 +481,23 @@ def record(side, ticker, shares, price, reason, status, err) -> None:
         }, ensure_ascii=False) + "\n")
 
 
+def verdict(summary: str, width: int = 88) -> str:
+    """セッション要約から結論の一行を取り出す。
+
+    結論は末尾に来ることが多いので、「判断」「結論」を含む行を優先し、
+    無ければ最後の実質的な行を使う。見出しと箇条書きの記号は落とす。
+    """
+    lines = [ln.strip().lstrip("#-*> ").strip()
+             for ln in summary.splitlines() if ln.strip()]
+    lines = [ln for ln in lines if len(ln) > 4]
+    if not lines:
+        return "（要約なし）"
+    pick = next((ln for ln in reversed(lines)
+                 if "判断" in ln or "結論" in ln), lines[-1])
+    pick = pick.replace("**", "")
+    return pick if len(pick) <= width else pick[:width - 1] + "…"
+
+
 def cmd_journal(args) -> None:
     if not JOURNAL.exists():
         return print("記録なし")
@@ -354,13 +509,18 @@ def cmd_journal(args) -> None:
         if datetime.fromisoformat(e["ts"]) < cutoff:
             continue
 
-        # セッションの結論。売買しなかった回もここに残る
+        # セッションの結論。売買しなかった回もここに残る。
+        # 既定では1行に畳む。5回/日×7日=35件を全文で出すと1万トークンを超え、
+        # 肝心の注文の理由がその中に埋もれる。全文が要るときだけ --full。
         if e["status"] == "SESSION":
-            head = f"{e['ts'][:16]} ◆ {e.get('session', '?')}"
-            print(f"{head}  （{e.get('turns', '?')}ターン）")
-            for ln in (e.get("summary") or "").splitlines():
-                print(f"    {ln}")
-            print()
+            head = f"{e['ts'][:16]} ◆ {e.get('session', '?'):<9}"
+            if args.full:
+                print(f"{head}（{e.get('turns', '?')}ターン）")
+                for ln in (e.get("summary") or "").splitlines():
+                    print(f"    {ln}")
+                print()
+            else:
+                print(f"{head}{verdict(e.get('summary') or '')}")
             continue
 
         mark = "✓" if e["status"] == "FILLED" else "✗"
@@ -412,18 +572,27 @@ if __name__ == "__main__":
 
     st = sub.add_parser("status"); st.add_argument("--book", choices=["us", "jp"])
     q = sub.add_parser("quote"); q.add_argument("tickers", nargs="+")
+    h = sub.add_parser("history"); h.add_argument("tickers", nargs="+")
+
+    sc = sub.add_parser("screen")
+    sc.add_argument("--book", choices=["us", "jp"])
+    sc.add_argument("--move", type=float, default=3.0, help="値動きのしきい値（%）")
+    sc.add_argument("--limit", type=int, default=8, help="表示する最大件数")
 
     for name in ("buy", "sell"):
         t = sub.add_parser(name)
         t.add_argument("ticker"); t.add_argument("shares", type=int)
         t.add_argument("--reason", required=True, help="判断理由。必須。")
 
-    j = sub.add_parser("journal"); j.add_argument("--days", type=int, default=7)
+    j = sub.add_parser("journal")
+    j.add_argument("--days", type=int, default=7)
+    j.add_argument("--full", action="store_true", help="セッション要約を全文表示する")
     sub.add_parser("snapshot")
     sub.add_parser("universe")
 
     a = p.parse_args()
     {"init": cmd_init, "status": cmd_status, "quote": cmd_quote,
+     "history": cmd_history, "screen": cmd_screen,
      "journal": cmd_journal, "snapshot": cmd_snapshot,
      "universe": cmd_universe}.get(
         a.cmd, lambda x: cmd_trade(x, a.cmd.upper()))(a)
