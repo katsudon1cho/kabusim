@@ -131,6 +131,19 @@ $env:BROKER_OFFLINE=1; python broker.py status
 us-open 23:45 / us-close 5:45 / report 7:00 で登録し直す。忘れると us-open が開場前、
 us-close が引け後に走る。
 
+### 遅延について（重要）
+
+**GitHub の `schedule` はベストエフォートで、実測で最大3時間半ずれた。**
+寄り付き後セッションが昼過ぎに走り、引け前セッションが引け後に走る。
+
+時刻の正確さが要るなら、外部の定時実行サービスから `repository_dispatch` を叩く。
+受け口は実装・検証済みで、送信から数秒で起動する。手順は **[SCHEDULE.md](SCHEDULE.md)**。
+
+    # 判断セッション
+    {"event_type":"session","client_payload":{"session":"jp-open"}}
+    # 価格更新
+    {"event_type":"prices"}
+
 祝日判定は入れていないので、休場日は Claude が「値が動いていない」と気づいて何もしないはず。
 
 ## 生成物
