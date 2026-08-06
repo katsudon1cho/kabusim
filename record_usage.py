@@ -81,19 +81,29 @@ def main() -> int:
 
     ok = not d.get("is_error")
     turns = d.get("num_turns", "")
-    record_session(ts, session, ok, turns, (d.get("result") or "").strip())
+    summary = (d.get("result") or "").strip()
+    if not ok:
+        # ターン上限などで打ち切られると、判断の途中で終わったのに
+        # そこまでの約定は state.json に確定している。記録の先頭で明示する。
+        why = {"error_max_turns": f"ターン上限({turns})に達して打ち切られました"}.get(
+            d.get("subtype"), f"異常終了しました（{d.get('subtype')}）")
+        summary = f"⚠ このセッションは{why}。判断が途中で終わっている可能性があります。\n\n{summary}"
+    record_session(ts, session, ok, turns, summary)
 
     u = d.get("usage") or {}
     models = d.get("modelUsage") or {}
+    # 数値は必ず数で持つ。欠けているときに空文字を入れると、下の桁区切り書式が
+    # 例外を投げ、set -e でセッション全体が失敗扱いになる。
+    n = lambda k: int(u.get(k) or 0)
     row = [
         ts, session,
         "ok" if ok else f"error:{d.get('subtype', '?')}",
         turns,
         round((d.get("duration_ms") or 0) / 1000, 1),
-        u.get("input_tokens", ""),
-        u.get("cache_creation_input_tokens", ""),
-        u.get("cache_read_input_tokens", ""),
-        u.get("output_tokens", ""),
+        n("input_tokens"),
+        n("cache_creation_input_tokens"),
+        n("cache_read_input_tokens"),
+        n("output_tokens"),
         round(d.get("total_cost_usd") or 0, 4),
         "|".join(sorted(models)) if isinstance(models, dict) else str(models),
     ]

@@ -16,8 +16,10 @@ cd "$(dirname "$0")"
 PYTHON="${PYTHON:-python3}"
 export PYTHONUTF8=1
 
-# 暴走時の上限。CI では特に効かせておきたい。
-MAX_TURNS="${MAX_TURNS:-40}"
+# 暴走時の上限。ここで打ち切られると判断の途中で終わり、しかもそこまでの
+# 約定は state.json に確定済みという中途半端な状態が残る。
+# 実測は16銘柄・Sonnet で26ターン。45銘柄に増えたぶん余裕を持たせてある。
+MAX_TURNS="${MAX_TURNS:-60}"
 
 # 評価期間が1年あるので、途中でモデルが入れ替わると判断の記録を横並びで
 # 比較できなくなる。エイリアス(opus)ではなく正式名で固定しておく。
@@ -32,33 +34,51 @@ if [ -z "$SESSION" ]; then
   exit 1
 fi
 STAMP=$(TZ=Asia/Tokyo date +%Y-%m-%d_%H%M)
+NOW=$(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M')
+TODAY=$(TZ=Asia/Tokyo date +%F)
 mkdir -p logs reports
 
+# セッション名だけ渡しても、実際に何時に走ったかが分からない。
+# GitHub のスケジュールは数時間ずれることがあり、jp-open が12:45に走った例もある。
+# 予定時刻と実測のずれを渡して、モデル側で状況を補正できるようにする。
 case "$SESSION" in
-  jp-open)
-    PROMPT="日本株ブックの寄り付き後セッションです（--session jp-open）。
-CLAUDE.md の手順に従ってください。前場の値動きと朝方のニュースを確認し、
-保有の前提が崩れていないかを最優先で見てください。" ;;
-  jp-close)
-    PROMPT="日本株ブックの引け前セッションです（--session jp-close）。
-CLAUDE.md の手順に従ってください。本日の値動きの理由を確認し、
-翌日以降に持ち越すべきでないポジションがないか判断してください。" ;;
-  us-open)
-    PROMPT="米国株ブックの寄り付き後セッションです（--session us-open）。
-CLAUDE.md の手順に従ってください。寄り付きの反応と前日引け後の決算・
-ガイダンス発表を確認してください。" ;;
-  us-close)
-    PROMPT="米国株ブックの引け前セッションです（--session us-close）。
-CLAUDE.md の手順に従ってください。本日の総括と、引け後に予定されている
-イベント（決算発表など）への備えを判断してください。" ;;
-  report)
-    "$PYTHON" broker.py snapshot
-    PROMPT="日報作成セッションです（--session report）。
-broker.py status と broker.py journal --days 1 を実行し、CLAUDE.md の
-「日報」の項に従って reports/$(TZ=Asia/Tokyo date +%F).md を作成してください。
-売買しなかった理由と、自分の判断の誤りについて必ず触れてください。" ;;
+  jp-open)  SCHED="09:08"; BOOK="日本株ブック"; WHEN="寄り付き後"
+            FOCUS="前場の値動きと朝方のニュースを確認し、保有の前提が崩れていないかを最優先で見てください。" ;;
+  jp-close) SCHED="14:38"; BOOK="日本株ブック"; WHEN="引け前"
+            FOCUS="本日の値動きの理由を確認し、翌日以降に持ち越すべきでないポジションがないか判断してください。" ;;
+  us-open)  SCHED="22:52"; BOOK="米国株ブック"; WHEN="寄り付き後"
+            FOCUS="寄り付きの反応と、前日引け後の決算・ガイダンス発表を確認してください。" ;;
+  us-close) SCHED="04:08"; BOOK="米国株ブック"; WHEN="引け前"
+            FOCUS="本日の総括と、引け後に予定されているイベント（決算発表など）への備えを判断してください。" ;;
+  report)   SCHED="05:53"; BOOK="両ブック"; WHEN="日報"
+            FOCUS="" ;;
   *) echo "不明なセッション: $SESSION" >&2; exit 1 ;;
 esac
+
+# 予定との差を分で出す。日付をまたぐセッションがあるので折り返す
+now_min=$(( 10#$(TZ=Asia/Tokyo date +%H) * 60 + 10#$(TZ=Asia/Tokyo date +%M) ))
+sch_min=$(( 10#${SCHED%%:*} * 60 + 10#${SCHED##*:} ))
+DELAY=$(( now_min - sch_min ))
+[ "$DELAY" -lt -720 ] && DELAY=$(( DELAY + 1440 ))
+[ "$DELAY" -gt 720 ] && DELAY=$(( DELAY - 1440 ))
+
+if [ "$DELAY" -ge 20 ]; then
+  TIMING="予定 ${SCHED} に対して実際は ${NOW}（約${DELAY}分の遅れ）。
+セッション名が想定する市場の状態と実際がずれている可能性があります。
+セッション名ではなく、実際の時刻と \`broker.py history\` で確かめた値動きを優先してください。"
+else
+  TIMING="予定 ${SCHED} / 実行 ${NOW}。"
+fi
+
+if [ "$SESSION" = "report" ]; then
+  "$PYTHON" broker.py snapshot
+  PROMPT="日報セッション（--session report）。${TIMING}
+両ブックが対象です。日報の書き込み先は reports/${TODAY}.md です。
+売買しなかった理由と、自分の判断の誤りについて必ず触れてください。"
+else
+  PROMPT="${BOOK}の${WHEN}セッション（--session ${SESSION}）。${TIMING}
+${FOCUS}"
+fi
 
 echo "=== $SESSION @ $STAMP ===" | tee -a "logs/${SESSION}.log"
 
