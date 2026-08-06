@@ -46,18 +46,51 @@ EQUITY_LOG = Path("equity_log.csv")
 # ベンチマーク自身(SPY / 1306.T)は意図的に入れていない。買った分はベンチと同じ
 # 動きになりアルファが出ないため。QQQ も中身が個別銘柄と重複し、25%上限を
 # 迂回する抜け穴になるので除外している。
+# S&P500 の上位構成に寄せると指数から乖離しようがないので、意図的に
+# 業種を散らしてある。テックは45銘柄中13（29%）に抑えた。
 US_UNIVERSE = [
+    # 情報技術・通信サービス
     "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "AVGO", "TSLA",
-    "JPM", "V", "UNH", "XOM", "COST", "LLY", "AMD", "NFLX",
+    "AMD", "NFLX", "ORCL", "CRM", "TXN", "DIS", "TMUS",
+    # ヘルスケア
+    "LLY", "UNH", "JNJ", "ABBV", "MRK", "TMO", "ISRG",
+    # 生活必需品・一般消費財
+    "COST", "PG", "KO", "PEP", "WMT", "HD", "MCD", "NKE",
+    # 金融
+    "JPM", "V", "BAC", "GS", "BLK", "SPGI",
+    # 資本財・運輸
+    "CAT", "HON", "UNP", "GE",
+    # エネルギー・素材・公益・不動産
+    "XOM", "CVX", "LIN", "NEE", "AMT",
 ]
 # 日本株は単元100株なので、1株の値段が「ブック総資産 x MAX_POSITION_PCT / 100」を
 # 超える銘柄は一度も約定できない。JP元本2,000万円なら1株50,000円が上限。
 # キーエンス(6861)と東京エレクトロン(8035)はこれを超えるため、同業のファナック
 # (6954)とアドバンテスト(6857)に置き換えた。銘柄を足すときは必ずこの計算をすること。
+# 全銘柄が「1株 ≤ 総資産×25%÷100」を満たすことを確認済み（`universe` で再確認できる）。
+# キーエンス(6861) / 東京エレクトロン(8035) / ディスコ(6146) / SMC(6273) は
+# 1単元が上限を超えるため入れていない。
 JP_UNIVERSE = [
-    "7203.T", "6758.T", "8306.T", "9984.T", "6954.T", "7974.T", "8058.T",
-    "6501.T", "4063.T", "9433.T", "6098.T", "6857.T", "7267.T",
-    "4568.T", "2914.T", "9020.T",   # 内需ディフェンシブ: 第一三共 / JT / JR東日本
+    # 自動車・機械
+    "7203.T", "7267.T", "6954.T",
+    # 電機・精密・電子部品
+    "6758.T", "6501.T", "6981.T", "6702.T", "6503.T", "7751.T",
+    # 半導体
+    "6857.T", "6963.T", "6723.T", "6920.T",
+    # 銀行・保険
+    "8306.T", "8316.T", "8411.T", "8766.T", "8750.T",
+    # 商社・投資
+    "8058.T", "8031.T", "8001.T", "9984.T",
+    # 医薬
+    "4568.T", "4502.T", "4519.T",
+    # 素材・化学・鉄鋼
+    "4063.T", "4452.T", "4901.T", "5401.T",
+    # 通信・IT・サービス
+    "9433.T", "9432.T", "9434.T", "6098.T", "4661.T", "7974.T",
+    # 小売・食品
+    "3382.T", "8267.T", "9843.T", "2914.T", "2802.T", "2502.T",
+    # 運輸・不動産・公益
+    "9020.T", "9022.T", "9101.T", "8801.T", "9531.T",
 ]
 BENCH = {"us": "SPY", "jp": "1306.T"}   # 1306 = TOPIX連動ETF。比較用で売買はできない
 LOT = {"us": 1, "jp": 100}              # 日本株は単元100株
@@ -206,6 +239,34 @@ def cmd_quote(args) -> None:
     for t in args.tickers:
         if t.upper() not in px:
             print(f"{t:<8}取得失敗")
+
+
+def cmd_universe(args) -> None:
+    """ユニバースの銘柄が実際に買えるか点検する。
+
+    日本株は単元100株なので、株価が上がると「候補に載っているのに必ず却下される」
+    銘柄が静かに増える。定期的にこれで確認すること。
+    """
+    s = load()
+    px = get_prices(all_tickers(s))
+    for b in ("us", "jp"):
+        bk, c, lot = s["books"][b], cur(b), LOT[b]
+        cap = equity(bk, px) * MAX_POSITION_PCT
+        limit = cap / lot
+        u = universe(b)
+        name = "米国株" if b == "us" else "日本株"
+        print(f"=== {name}ブック {len(u)}銘柄 ===")
+        print(f"1銘柄上限 {c}{cap:,.0f} / 単元{lot}株 → 1株 {c}{limit:,.0f} まで")
+        bad = [(t, px.get(t)) for t in sorted(u)
+               if px.get(t) is None or px[t] > limit]
+        if not bad:
+            print("  全銘柄が購入可能\n")
+            continue
+        print(f"  買えない銘柄 {len(bad)}件:")
+        for t, p in bad:
+            tail = f"{c}{p:,.0f}（1単元 {c}{p * lot:,.0f}）" if p else "価格を取得できない"
+            print(f"    {t:<9}{tail}")
+        print()
 
 
 def cmd_trade(args, side: str) -> None:
@@ -359,8 +420,10 @@ if __name__ == "__main__":
 
     j = sub.add_parser("journal"); j.add_argument("--days", type=int, default=7)
     sub.add_parser("snapshot")
+    sub.add_parser("universe")
 
     a = p.parse_args()
     {"init": cmd_init, "status": cmd_status, "quote": cmd_quote,
-     "journal": cmd_journal, "snapshot": cmd_snapshot}.get(
+     "journal": cmd_journal, "snapshot": cmd_snapshot,
+     "universe": cmd_universe}.get(
         a.cmd, lambda x: cmd_trade(x, a.cmd.upper()))(a)
