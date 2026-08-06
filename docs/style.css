@@ -40,13 +40,17 @@ html, body { overscroll-behavior-y: contain; }
 
 /* ---------------- 引っぱって更新 ---------------- */
 
+/* 引いた分だけ紙面ごと下げる。丸だけが降りてくると操作と噛み合わない */
+.shell { will-change: transform; }
+.shell.ease { transition: transform .3s cubic-bezier(.2,.8,.3,1); }
+
 .ptr {
   position: fixed; z-index: 40;
-  top: calc(6px + env(safe-area-inset-top)); left: 50%;
+  top: env(safe-area-inset-top); left: 50%;
   width: 26px; height: 26px; margin-left: -13px;
   display: grid; place-items: center;
   pointer-events: none;
-  opacity: 0; transform: translateY(-38px);
+  opacity: 0; transform: translateY(0);
 }
 .ptr i {
   display: block; width: 17px; height: 17px;

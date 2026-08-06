@@ -400,10 +400,11 @@ function render() {
 async function refresh() {
   if (refreshing) return;
   refreshing = true;
+  // 読み込み中は紙面を降ろしたまま保持し、リングを回す
   const ptr = $("#ptr");
-  ptr.classList.add("ease", "spin");
-  ptr.style.transform = "translateY(26px)";
-  ptr.style.opacity = "1";
+  ptrPlace(PTR_TRIGGER, true);
+  ptr.style.transform = `translateY(${PTR_TRIGGER / 2 - 13}px)`;
+  ptr.classList.add("spin");
 
   const get = (u) => fetch(u, { cache: "reload" })
     .then((r) => (r.ok ? r.json() : null)).catch(() => null);
@@ -424,17 +425,34 @@ async function refresh() {
   refreshing = false;
 }
 
+const PTR_TRIGGER = 64;
+
+/* 紙面を d px 下げ、空いた隙間の中央にリングを置く */
+function ptrPlace(d, ease) {
+  const ptr = $("#ptr"), shell = $("#shell");
+  shell.classList.toggle("ease", !!ease);
+  ptr.classList.toggle("ease", !!ease);
+  shell.style.transform = `translateY(${d}px)`;
+  ptr.style.transform =
+    `translateY(${Math.max(0, d / 2 - 13).toFixed(1)}px) rotate(${(d * 4).toFixed(0)}deg)`;
+  ptr.style.opacity = String(Math.min(1, d / PTR_TRIGGER));
+}
+
 function setupPullToRefresh() {
-  const ptr = $("#ptr");
-  const MAX = 96, TRIGGER = 64;
+  const ptr = $("#ptr"), shell = $("#shell");
+  const MAX = 96, TRIGGER = PTR_TRIGGER;
   let startY = 0, startX = 0, dist = 0, active = false;
 
-  const place = (d, ease) => {
-    ptr.classList.toggle("ease", !!ease);
-    ptr.style.transform = `translateY(${d - 38}px) rotate(${(d * 4).toFixed(0)}deg)`;
-    ptr.style.opacity = String(Math.min(1, d / TRIGGER));
-  };
+  const place = ptrPlace;
   const reset = () => { active = false; dist = 0; place(0, true); };
+
+  // 戻りきったら transform を外す。残しておくと sticky の基準がずれる
+  shell.addEventListener("transitionend", () => {
+    if (!active && !refreshing && shell.style.transform === "translateY(0px)") {
+      shell.style.transform = "";
+      shell.classList.remove("ease");
+    }
+  });
 
   document.addEventListener("touchstart", (e) => {
     if (refreshing || e.touches.length !== 1 || window.scrollY > 0) return;
