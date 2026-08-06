@@ -25,7 +25,12 @@ jobs:
       name: github-pages
       url: ${{ steps.dep.outputs.page_url }}
     steps:
+      # 既定ではワークフローを起動したコミットを取りに行くため、
+      # セッションジョブが直前に push した台帳や日報が入らない。
+      # 必ずブランチの先端を取る。
       - uses: actions/checkout@v4
+        with:
+          ref: main
 
       - uses: actions/setup-python@v5
         with:
