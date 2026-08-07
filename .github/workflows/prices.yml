@@ -8,7 +8,8 @@ name: prices
 # 以前はここにも schedule を置いていたが、外部の tick と二重に発火して
 # 配信の負荷が倍になっていた。8/7 に配信の列が詰まったとき、この重複が
 # 待機列を伸ばして cancel の連鎖を悪化させたため削除した。
-# 外部が止まったときの保険は session.yml 側の schedule が担う。
+# session.yml の schedule も同じ理由で削除済み。GitHub の schedule は使わない。
+# 外部が止まったときの検知は cron-job.org の失敗通知に任せる。
 
 on:
   repository_dispatch:

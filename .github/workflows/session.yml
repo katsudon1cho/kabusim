@@ -1,22 +1,16 @@
 name: kabusim session
 
-# GitHub Actions の cron は UTC 固定。JST = UTC+9 なので9時間引いてある。
-# 米国市場は夏時間で1時間ずれるため、11月の切り替え時に us-open / us-close /
-# report の3本を下の「冬時間」の値に差し替えること。忘れると開場前・引け後に走る。
+# 起動は cron-job.org からの tick だけ。GitHub の schedule は使わない。
 #
-#   セッション   JST         UTC(夏)      UTC(冬)
-#   jp-open      平日 09:08  8 0 * * 1-5    同左
-#   jp-close     平日 14:38  38 5 * * 1-5   同左
-#   us-open      平日 22:52  52 13 * * 1-5  52 14 * * 1-5  (JST 23:52)
-#   us-close     火土 04:08  8 19 * * 1-5   8 20 * * 1-5   (JST 05:08)
-#   report       火土 05:53  53 20 * * 1-5  53 21 * * 1-5  (JST 06:53)
+# schedule は保険として置いていたが、tick が正常に届いても止まらないため
+# 毎回2回ずつ走っていた。8/7 の jp-close は 14:45（tick）と 15:59（schedule）に
+# 重複実行されている。しかも GitHub の schedule はベストエフォートで、
+# 実測で最大3時間半ずれた（jp-open が 09:08 予定に対し 12:13 起動）。
+# 遅れて走る保険は、市場の状態と噛み合わない判断を台帳に残す。
 #
-# 分を 0/15/30/45 から外してあるのは意図的。GitHub のスケジュールは
-# ベストエフォートで、混雑する丁度の時刻ほど遅延・間引きが大きい。
-# 実測では最大3時間半ずれた（jp-open が 09:15 予定に対し 12:45 起動）。
-#
-# 実運用は外部の定時実行から tick を投げる方式（下の repository_dispatch）。
-# 上の schedule は外部が止まったときの保険として残してある。
+# cron-job.org が止まった場合はセッションが一切走らなくなる。検知は
+# cron-job.org 側の失敗通知（POST が非2xxならメール）に任せる。
+# 復旧は workflow_dispatch か client_payload でセッションを名指しする。
 #
 #   tick は毎日 :45 に飛んでくる（4,5,6,9,14,22,23時）。
 #   どのセッションかは JST の「時」で決める:
@@ -32,15 +26,9 @@ name: kabusim session
 #   詳しくは SCHEDULE.md。
 
 on:
-  schedule:
-    - cron: "8 0 * * 1-5"      # jp-open   JST 09:08 平日
-    - cron: "38 5 * * 1-5"     # jp-close  JST 14:38 平日
-    - cron: "52 13 * * 1-5"    # us-open   JST 22:52 平日
-    - cron: "8 19 * * 1-5"     # us-close  JST 04:08 火〜土
-    - cron: "53 20 * * 1-5"    # report    JST 05:53 火〜土
-
-  # 外部の定時実行サービスから叩くための入口。スケジュールの遅延を避けたい
-  # ときに使う。payload に {"session":"jp-open"} を渡す。
+  # 外部の定時実行サービス（cron-job.org）から叩く唯一の入口。
+  # tick は時刻から種別を決める合図。session は名指しの復旧用で、
+  # payload に {"session":"jp-open"} を渡す。
   repository_dispatch:
     types: [session, tick]
 
@@ -96,14 +84,8 @@ jobs:
             esac
             [ -z "$S" ] && echo "この時刻・曜日に該当するセッションはありません（$H時 / 曜日$D）"
           else
-            case "${{ github.event.schedule }}" in
-              "8 0 * * 1-5")   S=jp-open  ;;
-              "38 5 * * 1-5")  S=jp-close ;;
-              "52 13 * * 1-5") S=us-open  ;;
-              "8 19 * * 1-5")  S=us-close ;;
-              "53 20 * * 1-5") S=report   ;;
-              *) S="${{ github.event.client_payload.session || inputs.session }}" ;;
-            esac
+            # tick 以外は名指しの手動実行だけ。障害復旧用に残してある。
+            S="${{ github.event.client_payload.session || inputs.session }}"
             if [ -z "$S" ]; then echo "セッション種別を決められない" >&2; exit 1; fi
           fi
           echo "session=$S" >> "$GITHUB_OUTPUT"
