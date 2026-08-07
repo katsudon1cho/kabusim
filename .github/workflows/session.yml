@@ -52,12 +52,10 @@ on:
         type: choice
         options: [jp-open, jp-close, us-open, us-close, report]
 
-# contents:write は台帳のコミット用。pages/id-token は deploy ジョブが呼ぶ
-# 再利用ワークフローに引き継ぐために必要（呼び出し側の権限しか渡らない）。
+# contents:write は台帳のコミット用。これだけでよい。
+# 以前は配信用に pages/id-token も宣言していたが、deploy ジョブを外したので不要。
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 # state.json を複数のジョブが同時に書き換えると台帳が壊れる。直列化する。
 concurrency:
@@ -165,13 +163,13 @@ jobs:
           echo "--- 直近のログ ---"
           tail -n 60 "logs/${{ steps.sess.outputs.session }}.log" 2>/dev/null || echo "ログなし"
 
-  # セッションが失敗しても、その時点の台帳を画面に反映させたいので always()
-  deploy:
-    needs: session
-    if: always()
-    uses: ./.github/workflows/deploy-pages.yml
-    # 配信が失敗してもセッションの成否は汚さない。ここが赤くなると
-    # 「売買の判断が失敗した」と読めてしまう。実際 8/6 の us-open は
-    # 判断も記録も成功していたのに、Pages の詰まりだけで failure になった。
-    with:
-      fail_on_error: false
+  # 配信ジョブは置かない。
+  #
+  # 以前はここで deploy-pages.yml を呼び、セッションの記録を即座に画面へ
+  # 反映していた。しかし配信が詰まると deploy ジョブが順番待ちのまま
+  # 20分以上居座り、セッションの実行が終わらなくなる。そこへ次のセッションが
+  # 来ると、待機中の実行が cancel される。8/7 の jp-open はこれで消えた。
+  #
+  # セッションは記録をコミットして終わる。画面への反映は20分おきに走る
+  # prices が git から拾ってやる。サイトの遅れは最大20分だが、
+  # サイトの都合で判断が失われるより桁違いにましである。

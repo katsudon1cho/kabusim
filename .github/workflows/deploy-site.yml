@@ -1,0 +1,59 @@
+name: deploy site
+
+# サイトは Vercel に配信する。
+#
+# 以前は GitHub Pages（actions/deploy-pages）を使っていたが、8/6 と 8/7 に
+# それぞれ10時間規模で配信が止まった。github-pages 環境は配信を直列化する仕組みで、
+# 先頭が waiting のまま固着すると後続が全部詰まる。しかも詰まった列に
+# session.yml の deploy ジョブも並んでいたため、待機中の実行が次々 cancel され、
+# 8/7 の jp-open は判断ごと消えた。サイトの都合で売買の判断を失うのは本末転倒。
+#
+# 対処は2つ。(1) セッションを配信から切り離す（session.yml から deploy を削除）
+# (2) 配信先を Vercel に移す。Vercel は環境も配信キューも介さず CLI で完結する。
+#
+# docs/data/ は毎回ここで作り直すので、リポジトリには残さない（.gitignore）。
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+# 配信は同時に1つまで。古いビルドが新しいビルドを上書きしないように直列化する。
+# Vercel の配信は数秒で終わるので、ここで列が育つことはない。
+concurrency:
+  group: deploy-site
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 既定ではワークフローを起動したコミットを取りに行くため、
+      # セッションが直前に push した台帳や日報が入らない。必ずブランチの先端を取る。
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: python -m pip install --quiet -r requirements.txt
+
+      - name: 台帳から画面用データを作る
+        run: python build_site.py
+
+      - name: 現在値と値動きを取り直す
+        run: python update_prices.py
+
+      # VERCEL_ORG_ID / VERCEL_PROJECT_ID は初回デプロイでプロジェクトが
+      # 作られてから確定する。未登録のうちは空文字になり、--yes が
+      # フォルダ名から推測して新規作成する。判明したらシークレットに追加すること。
+      - name: Vercel に配信する
+        run: npx --yes vercel@latest deploy --cwd docs --prod --yes --token "$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

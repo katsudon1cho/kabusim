@@ -1,0 +1,10 @@
+# 空にしておくこと。中身を足さないこと。
+#
+# Vercel CLI は .vercelignore が無いと .gitignore を見にいく。
+# このリポジトリの .gitignore には docs/data/ が入っている（毎回 CI で
+# 作り直すのでコミットしない方針のため）。そのまま配信すると
+# summary.json / prices.json / reports/ が丸ごと除外され、
+# 画面は出るのにデータが空、という壊れ方をする。
+#
+# このファイルが存在することで .gitignore は参照されなくなり、
+# docs/ の中身がそのまま配信される。
