@@ -21,3 +21,6 @@ permissions:
 jobs:
   refresh:
     uses: ./.github/workflows/deploy-site.yml
+    # 再利用ワークフローには権限もシークレットも自動では引き継がれない。
+    # これが無いと VERCEL_TOKEN が空になり「--token に値がない」で落ちる。
+    secrets: inherit

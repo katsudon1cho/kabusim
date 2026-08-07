@@ -13,6 +13,8 @@ name: deploy site
 #
 # docs/data/ は毎回ここで作り直すので、リポジトリには残さない（.gitignore）。
 
+# 呼び出し側は secrets: inherit を付けること。再利用ワークフローには
+# シークレットが自動では渡らず、VERCEL_TOKEN が空のまま起動して失敗する。
 on:
   workflow_call:
 
