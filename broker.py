@@ -389,9 +389,6 @@ def cmd_clock(args) -> None:
     t = now()
     wd = "月火水木金土日"[t.weekday()]
     print(f"現在 {t:%Y-%m-%d %H:%M} JST（{wd}）")
-    if t.weekday() >= 5:
-        print("  土日のため日米とも休場です")
-        return
 
     mins = t.hour * 60 + t.minute
 
@@ -402,20 +399,31 @@ def cmd_clock(args) -> None:
                 return f"  {label}: {name}{tail}"
         return None
 
+    # 曜日は市場ごとに見る。以前は JST の曜日で両市場をまとめて休場と判定して
+    # 早期 return していたが、夏時間の米国市場は JST 22:30〜翌05:00 なので
+    # 「JST 土曜の未明」は金曜の立会中にあたる。us-close は 04:08 JST（火〜土）に
+    # 走るため、この枠が毎回「休場」と誤報されていた。
+    jp_open_day = t.weekday() < 5
+    # 米国は JST 05:00 までが前日の立会の続き。その時間帯は前日の曜日で判定する。
+    us_day = (t - timedelta(days=1)).weekday() if mins < 5 * 60 else t.weekday()
+    us_open_day = us_day < 5
+
     jp = span("日本市場", [
         (0, 9 * 60, "寄り付き前", False),
         (9 * 60, 11 * 60 + 30, "前場", False),
         (11 * 60 + 30, 12 * 60 + 30, "昼休み", False),
         (12 * 60 + 30, 15 * 60 + 30, "後場", True),
         (15 * 60 + 30, 24 * 60, "引け後", False),
-    ])
+    ]) if jp_open_day else "  日本市場: 休場（土日）"
+
     # 夏時間の米国市場は JST 22:30〜翌05:00。冬は1時間後ろ
     us = span("米国市場", [
         (0, 5 * 60, "取引時間中", True),
         (5 * 60, 21 * 60, "閉場", False),
         (21 * 60, 22 * 60 + 30, "寄り付き前", False),
         (22 * 60 + 30, 24 * 60, "取引時間中", False),
-    ])
+    ]) if us_open_day else "  米国市場: 休場（週末）"
+
     for line in (jp, us):
         if line:
             print(line)
