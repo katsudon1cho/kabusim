@@ -160,6 +160,12 @@ function bookBlock(bk) {
       <div class="cell"><div class="k">これとの差</div>
         <div class="v ${cls(bk.diff_pt)}-t">${ptv(bk.diff_pt)}</div></div>
       <div class="cell"><div class="k">現金比率</div><div class="v">${bk.cash_pct.toFixed(1)}%</div></div>
+      <div class="cell"><div class="k">受取利息</div>
+        <div class="v">${money(bk.currency, bk.cash_interest || 0)}</div></div>
+      <div class="cell"><div class="k">受取配当</div>
+        <div class="v">${money(bk.currency, bk.dividends || 0)}</div></div>
+      <div class="cell"><div class="k">現金金利 <small>${esc(bk.cash_apy_src || "")}</small></div>
+        <div class="v">${bk.cash_apy ? (bk.cash_apy * 100).toFixed(2) + "%" : "—"}</div></div>
     </div>
   </div>
   <div class="sect">保有 ${bk.positions.length}銘柄 / ユニバース ${bk.universe.length}</div>

@@ -231,6 +231,137 @@ def bench_value(bk: dict, px: dict, b: str) -> float:
     return bk["bench_shares"] * px[BENCH[b]]
 
 
+# =========================================================
+# 現金の利息と配当
+#
+# どちらも当初は計上していなかったが、それぞれ別の向きに成績を歪めていた。
+#
+#   利息  現実の待機資金は短期金利ぶん増える。無利息にすると「見送る」という
+#         この運用の中心的な選択肢だけが不当に罰される。現金78%なら年3pt規模。
+#   配当  ベンチマーク側にだけ入れないと SPY が過小評価され、逆に保有側にだけ
+#         入れるとこちらが有利になりすぎる。必ず両方に入れること。
+#
+# 二重計上を防ぐため、どちらも「どの日まで計上したか」を state に持つ。
+# 日付をキーにするので、1日に何度実行しても結果は変わらない。
+# =========================================================
+
+CASH_RATE_TICKER = "^IRX"   # 13週財務省証券の利回り。待機資金の利回りに最も近い
+JPY_CASH_APY = 0.004        # 円は Yahoo に短期金利の系列が無いので固定の仮定値
+
+
+def cash_apy(s: dict, b: str):
+    """現金の年利（小数）。米ドルは実測、円は仮定値。
+
+    取得に失敗したら前回値を使う。前回値も無ければ None を返し、
+    呼び出し側は計上を見送って次回にまとめて計上する。
+    無人で走るので、金利が取れないくらいで判断を止めてはいけない。
+    """
+    if b == "jp":
+        return JPY_CASH_APY
+    rates = s.setdefault("rates", {})
+    today = now().date().isoformat()
+    if rates.get("asof") == today and "usd_apy" in rates:
+        return rates["usd_apy"]
+    v = None
+    if not os.environ.get("BROKER_OFFLINE"):
+        try:
+            import yfinance as yf
+            df = yf.download(CASH_RATE_TICKER, period="5d",
+                             progress=False, auto_adjust=False)
+            c = df["Close"].ffill().iloc[-1]
+            v = float(c.item() if hasattr(c, "item") else c) / 100
+        except Exception:
+            v = None
+    # 桁を間違えた値（%のまま等）を弾く。0〜25%の外は異常とみなす
+    if v is not None and 0 <= v < 0.25:
+        rates["usd_apy"], rates["asof"] = v, today
+        return v
+    return rates.get("usd_apy")
+
+
+def _dividends_since(ticker: str, since):
+    """since より後の権利落ち日と1株配当を [(date, 金額)] で返す。
+
+    取得に失敗したら None。呼び出し側は計上日を進めずに次回やり直す。
+    """
+    if os.environ.get("BROKER_OFFLINE"):
+        return []
+    try:
+        import yfinance as yf
+        ser = yf.Ticker(ticker).dividends
+    except Exception:
+        return None
+    out = []
+    try:
+        for ts, amt in ser.items():
+            d = ts.date() if hasattr(ts, "date") else ts
+            if d > since:
+                out.append((d, float(amt)))
+    except Exception:
+        return None
+    return sorted(out)
+
+
+def accrue(s: dict, px: dict) -> list:
+    """利息と配当を計上する。何度呼んでも二重計上しない。
+
+    配当は「権利落ち日にその銘柄を保有しているか」を*現在の*保有で判定する
+    近似を使う。権利落ち直前に買った・直後に売った場合に僅かなズレが出るが、
+    厳密にやるには日次の保有履歴が要り、この実験の目的には過剰。
+    """
+    today = now().date()
+    events = []
+    for b in ("us", "jp"):
+        bk = s["books"][b]
+        bk.setdefault("cash_interest", 0.0)
+        bk.setdefault("dividends", 0.0)
+        bk.setdefault("accrued_through", s["start_date"])
+        bk.setdefault("div_through", s["start_date"])
+
+        days = (today - datetime.fromisoformat(bk["accrued_through"]).date()).days
+        if days > 0:
+            apy = cash_apy(s, b)
+            if apy is not None:
+                amt = bk["cash"] * apy / 365 * days
+                bk["cash"] += amt
+                bk["cash_interest"] += amt
+                bk["accrued_through"] = today.isoformat()
+                if amt:
+                    events.append((b, "利息", f"{days}日 @年{apy * 100:.2f}%", amt))
+
+        since = datetime.fromisoformat(bk["div_through"]).date()
+        if since < today:
+            ok = True
+            for t, p in list(bk["positions"].items()):
+                divs = _dividends_since(t, since)
+                if divs is None:
+                    ok = False
+                    continue
+                for d, per in divs:
+                    if d <= today:
+                        amt = p["shares"] * per
+                        bk["cash"] += amt
+                        bk["dividends"] += amt
+                        events.append((b, "配当", f"{t} {d} @{per:g}", amt))
+            # ベンチマークは配当を再投資する。SPY を買って持ち続けた場合と
+            # 同じ扱いにするため。現金で置くとこちら側が有利になりすぎる。
+            bt = BENCH[b]
+            if bk["bench_shares"] and bt in px:
+                divs = _dividends_since(bt, since)
+                if divs is None:
+                    ok = False
+                else:
+                    for d, per in divs:
+                        if d <= today:
+                            add = bk["bench_shares"] * per / px[bt]
+                            bk["bench_shares"] += add
+                            events.append((b, "ベンチ配当再投資",
+                                           f"{bt} {d} @{per:g}", 0.0))
+            if ok:
+                bk["div_through"] = today.isoformat()
+    return events
+
+
 def fmt_book(s: dict, px: dict, b: str) -> str:
     bk, c = s["books"][b], cur(b)
     eq, bm = equity(bk, px), bench_value(bk, px, b)
@@ -242,8 +373,16 @@ def fmt_book(s: dict, px: dict, b: str) -> str:
         f"差 {(eq / bm - 1) * 100:+.2f}pt",
         f"現金 {c}{bk['cash']:,.0f} ({bk['cash'] / eq * 100:.1f}%)   "
         f"本日の買い {buys_today(bk)}/{MAX_BUYS_PER_DAY}件（売りは上限なし）",
-        "保有:",
     ]
+    # 利息は仮定（円）または実測（ドル）が混ざる数字なので、株価と区別して出す。
+    # 総資産のうちどれだけが判断以外から来ているかが見えないと成績を読み違える。
+    apy = s.get("rates", {}).get("usd_apy") if b == "us" else JPY_CASH_APY
+    src = "実測 ^IRX" if b == "us" else "仮定"
+    out.append(
+        f"受取利息 {c}{bk.get('cash_interest', 0):,.0f} / "
+        f"受取配当 {c}{bk.get('dividends', 0):,.0f}   "
+        + (f"現金金利 年{apy * 100:.2f}%（{src}）" if apy else "現金金利 未取得"))
+    out.append("保有:")
     if not bk["positions"]:
         out.append("  なし")
     for t, p in sorted(bk["positions"].items()):
@@ -268,8 +407,13 @@ def cmd_status(args) -> None:
     for b in ("us", "jp"):
         if s["books"][b]["bench_shares"] is None and BENCH[b] in px:
             s["books"][b]["bench_shares"] = s["books"][b]["start_equity"] / px[BENCH[b]]
+    ev = accrue(s, px)
     save(s)
     print(f"時刻: {now():%Y-%m-%d %H:%M} JST\n")
+    for b, kind, detail, amt in ev:
+        print(f"  [{b}] {kind}: {detail}" + (f" → {cur(b)}{amt:,.2f}" if amt else ""))
+    if ev:
+        print()
     for b in ("us", "jp"):
         if args.book in (None, b):
             print(fmt_book(s, px, b), "\n")
@@ -585,6 +729,8 @@ HEADER = ["date", "book", "equity", "cash", "bench", "ret_pct", "bench_pct"]
 def cmd_snapshot(args) -> None:
     s = load()
     px = get_prices(all_tickers(s))
+    accrue(s, px)
+    save(s)
     today = now().date().isoformat()
 
     # 同じ日に2回流しても行が重複しないよう、当日分は書き直す。
