@@ -25,6 +25,7 @@ DOCS = Path("docs")
 DATA = DOCS / "data"
 REPORTS_SRC = Path("reports")
 REPORTS_OUT = DATA / "reports"
+SESSIONS_OUT = DATA / "sessions"   # セッション本文。日ごとに分けて遅延読み込みする
 
 BOOK_NAMES = {"us": "米国株ブック", "jp": "日本株ブック"}
 BOOK_CCY = {"us": "USD", "jp": "JPY"}
@@ -225,15 +226,30 @@ def read_series():
     return series
 
 
-def read_trades(limit=400):
+def _one_line(md: str, limit: int = 90) -> str:
+    """セッション要約の1行目だけを、記号を落として取り出す。一覧の見出し用。"""
+    for raw in (md or "").splitlines():
+        t = re.sub(r"^[#>\-*\s]+", "", raw).strip()
+        t = re.sub(r"[*`_]", "", t)
+        if t:
+            return t[:limit] + ("…" if len(t) > limit else "")
+    return ""
+
+
+def read_trades():
     """注文とセッションの結論を、時系列でひとまとめに返す。
 
     売買しなかったセッションも SESSION 行として入っているので、
     「調べたうえで見送った」も履歴に残る。
+
+    戻り値は (一覧, 日ごとの本文)。**セッションの本文は summary.json に入れない。**
+    1件あたり約4KBあり、1日5回×250日で1年1,250件になる。以前は limit=400 で
+    頭打ちにしていたが、それは80日目以降に古い記録を黙って捨てるということだった。
+    本文は日ごとの別ファイルに置き、履歴画面でその日を開いたときだけ取りにいく。
     """
     if not broker.JOURNAL.exists():
-        return []
-    out = []
+        return [], {}
+    out, bodies = [], {}
     for line in broker.JOURNAL.read_text(encoding=broker.ENC).splitlines():
         line = line.strip()
         if not line:
@@ -242,14 +258,28 @@ def read_trades(limit=400):
             e = json.loads(line)
         except json.JSONDecodeError:
             continue
+        e["day"] = str(e.get("ts", ""))[:10]
         if e.get("status") == "SESSION":
+            md = e.pop("summary", "") or ""
+            e["lead"] = _one_line(md)
             # 要約は Markdown で書かれてくるので、日報と同じ変換をかける
-            e["html"] = md_to_html(e.get("summary") or "")
+            bodies.setdefault(e["day"], []).append(
+                {"ts": e.get("ts"), "html": md_to_html(md)})
         else:
             e["book"] = broker.book_of(e.get("ticker", ""))
         out.append(e)
     out.reverse()                              # 新しい順
-    return out[:limit]
+    return out, bodies
+
+
+def write_sessions(bodies: dict) -> None:
+    """セッション本文を日ごとに書き出す。履歴画面が必要になった日だけ取得する。"""
+    SESSIONS_OUT.mkdir(parents=True, exist_ok=True)
+    for day, items in bodies.items():
+        items.sort(key=lambda x: x["ts"] or "", reverse=True)
+        (SESSIONS_OUT / f"{day}.json").write_text(
+            json.dumps({"date": day, "items": items}, ensure_ascii=False),
+            encoding=broker.ENC)
 
 
 def write_reports():
@@ -274,13 +304,15 @@ def main():
     px, prices_ok = load_prices(state)
 
     DATA.mkdir(parents=True, exist_ok=True)
+    trades, bodies = read_trades()
+    write_sessions(bodies)
     summary = {
         "generated_at": broker.now().isoformat(timespec="minutes"),
         "start_date": state.get("start_date"),
         "prices_ok": prices_ok,
         "books": {b: book_summary(state, px, b) for b in ("us", "jp")},
         "series": read_series(),
-        "trades": read_trades(),
+        "trades": trades,
         "reports": write_reports(),
     }
     (DATA / "summary.json").write_text(

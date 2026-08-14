@@ -314,21 +314,45 @@ main { padding-bottom: 1.5rem; }
 
 /* ---------------- 日報 ---------------- */
 
-.daterail {
-  display: flex; gap: .4rem; overflow-x: auto;
-  padding: .5rem .7rem; scrollbar-width: none;
-  border-bottom: 1px solid var(--line);
+/* 日報の月カレンダー。日付を横一列に並べると1年で250個になるので、
+   面で持って月送りする。日報のある日だけ押せる。 */
+.daterail { padding: .5rem .7rem .7rem; border-bottom: 1px solid var(--line); }
+.cal-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
+.cal-m { font-family: var(--mono); font-size: .76rem; color: var(--text); }
+.cal-nav {
+  appearance: none; border: 0; cursor: pointer; background: var(--panel);
+  color: var(--text); border-radius: 3px; font-size: .9rem; line-height: 1;
+  min-width: 40px; min-height: 32px;
 }
-.daterail::-webkit-scrollbar { display: none; }
-.daterail button {
-  flex: none; appearance: none; cursor: pointer;
-  font-family: var(--mono); font-size: .72rem;
-  min-height: 36px; min-width: 56px;
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: .25rem .6rem; border-radius: 3px;
-  color: var(--dim); background: var(--panel); border: 0;
+.cal-nav[disabled] { opacity: .3; cursor: default; }
+.cal-w, .cal-g { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.cal-w { margin-bottom: 2px; }
+.cal-w span { text-align: center; font-size: .58rem; color: var(--dim); }
+.cal-d {
+  appearance: none; border: 0; padding: 0; cursor: pointer;
+  font-family: var(--mono); font-size: .7rem;
+  min-height: 34px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 3px; background: var(--panel); color: var(--text);
 }
-.daterail button.on { background: var(--accent-bg); color: var(--accent); }
+.cal-d.off { background: transparent; color: var(--line2); cursor: default; }
+.cal-d.on { background: var(--accent-bg); color: var(--accent); }
+.cal-x { min-height: 34px; }
+
+/* 履歴は日ごとにたたむ。1年で1,500行を超える一本のスクロールを避ける。 */
+.day { list-style: none; border-bottom: 1px solid var(--line); }
+.day-h {
+  width: 100%; appearance: none; border: 0; cursor: pointer;
+  background: transparent; color: var(--text);
+  display: flex; align-items: center; gap: .5rem;
+  padding: .6rem .7rem; min-height: 44px; text-align: left;
+}
+.day-t { font-family: var(--mono); font-size: .76rem; }
+.day-n { flex: 1; font-size: .64rem; color: var(--dim); }
+.day-c { width: 0; height: 0; border-left: 4px solid var(--dim);
+  border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
+.day.open .day-c { border-left: 4px solid transparent;
+  border-top: 5px solid var(--dim); border-bottom: 0; }
+.day-b { margin: 0; padding: 0 0 .4rem; }
 
 .prose { padding: .8rem .7rem; }
 .prose h1 { font-size: 1rem; margin: 0 0 .7rem; }

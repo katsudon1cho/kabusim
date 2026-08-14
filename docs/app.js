@@ -263,47 +263,114 @@ function openDetail(tk, bkey) {
 
 /* ---------------- 履歴 ---------------- */
 
+/* 履歴は日ごとにたたむ。1日5セッションなので、全部並べると1年で1,500行を超え、
+   下へ延び続けるだけの画面になる。日単位なら1年でも250行に収まり、
+   目的の日に直接たどり着ける。開いた日の本文だけを data/sessions/<日>.json から取る。 */
+
+const openDays = new Set();
+const sessionCache = new Map();
+
+function itemHTML(t) {
+  const when = esc(t.ts.slice(11, 16));
+  if (t.status === "SESSION") {
+    return `
+    <li class="ses${t.ok === false ? " ng" : ""}" data-ts="${esc(t.ts)}">
+      <div class="f-r1">
+        <span class="f-side SES">${esc(t.session || "session")}</span>
+        <span class="f-qty">${t.turns ? `${t.turns}ターン` : ""}${t.ok === false ? " · 失敗" : ""}</span>
+        <span class="f-when">${when}</span>
+      </div>
+      <div class="ses-body clamp"><p>${esc(t.lead || "—")}</p></div>
+      <button class="more" type="button">続きを読む</button>
+    </li>`;
+  }
+  const ok = t.status === "FILLED";
+  return `
+  <li class="${ok ? "ok" : "ng"}">
+    <div class="f-r1">
+      <span class="f-side ${esc(t.side)}">${esc(t.side)}</span>
+      <span class="f-tk">${esc(t.ticker)}</span>
+      <span class="f-qty">${nf.format(t.shares)}株${t.price ? ` @${nf1.format(t.price)}` : ""}</span>
+      <span class="f-when">${when}</span>
+    </div>
+    <p class="f-why ${ok ? "" : "ng"}">${esc((ok ? t.reason : t.error) || "—")}</p>
+  </li>`;
+}
+
+const WD = ["日", "月", "火", "水", "木", "金", "土"];
+
+function dayLabel(d) {
+  const [y, m, dd] = d.split("-").map(Number);
+  return `${m}/${dd} ${WD[new Date(y, m - 1, dd).getDay()]}`;
+}
+
 function renderLog() {
   const list = DATA.trades.filter((t) => logFilter === "all" || t.status === logFilter);
   if (!list.length) { $("#ledger").innerHTML = `<p class="empty">該当する記録がありません。</p>`; return; }
 
-  $("#ledger").innerHTML = list.map((t) => {
-    const when = esc(t.ts.slice(5, 16).replace("T", " "));
+  const days = [];
+  const byDay = new Map();
+  list.forEach((t) => {
+    const d = t.day || t.ts.slice(0, 10);
+    if (!byDay.has(d)) { byDay.set(d, []); days.push(d); }
+    byDay.get(d).push(t);
+  });
+  if (!openDays.size) openDays.add(days[0]);   // 最新の日だけ開いておく
 
-    // セッションの結論。売買しなかった回もここに出る
-    if (t.status === "SESSION") {
-      return `
-      <li class="ses${t.ok === false ? " ng" : ""}">
-        <div class="f-r1">
-          <span class="f-side SES">${esc(t.session || "session")}</span>
-          <span class="f-qty">${t.turns ? `${t.turns}ターン` : ""}${t.ok === false ? " · 失敗" : ""}</span>
-          <span class="f-when">${when}</span>
-        </div>
-        <div class="ses-body clamp">${t.html || `<p>${esc(t.summary || "—")}</p>`}</div>
-        <button class="more" type="button">続きを読む</button>
-      </li>`;
-    }
-
-    const ok = t.status === "FILLED";
+  $("#ledger").innerHTML = days.map((d) => {
+    const items = byDay.get(d);
+    const filled = items.filter((t) => t.status === "FILLED").length;
+    const rej = items.filter((t) => t.status === "REJECTED").length;
+    const open = openDays.has(d);
+    const tags = [filled ? `約定${filled}` : "", rej ? `却下${rej}` : ""].filter(Boolean).join(" · ");
     return `
-    <li class="${ok ? "ok" : "ng"}">
-      <div class="f-r1">
-        <span class="f-side ${esc(t.side)}">${esc(t.side)}</span>
-        <span class="f-tk">${esc(t.ticker)}</span>
-        <span class="f-qty">${nf.format(t.shares)}株${t.price ? ` @${nf1.format(t.price)}` : ""}</span>
-        <span class="f-when">${when}</span>
-      </div>
-      <p class="f-why ${ok ? "" : "ng"}">${esc((ok ? t.reason : t.error) || "—")}</p>
+    <li class="day${open ? " open" : ""}" data-day="${esc(d)}">
+      <button class="day-h" type="button" aria-expanded="${open}">
+        <span class="day-t">${esc(dayLabel(d))}</span>
+        <span class="day-n">${items.length}件${tags ? ` · ${tags}` : ""}</span>
+        <span class="day-c" aria-hidden="true"></span>
+      </button>
+      <ol class="feed day-b"${open ? "" : " hidden"}>${items.map(itemHTML).join("")}</ol>
     </li>`;
   }).join("");
 
-  $("#ledger").querySelectorAll(".more").forEach((b) => {
-    const body = b.previousElementSibling;
-    b.onclick = () => {
-      const folded = body.classList.toggle("clamp");
-      body.dataset.open = folded ? "" : "1";
-      b.textContent = folded ? "続きを読む" : "閉じる";
+  $("#ledger").querySelectorAll(".day-h").forEach((h) => {
+    h.onclick = () => {
+      const li = h.parentElement;
+      const d = li.dataset.day;
+      const on = !openDays.has(d);
+      on ? openDays.add(d) : openDays.delete(d);
+      li.classList.toggle("open", on);
+      h.setAttribute("aria-expanded", String(on));
+      li.querySelector(".day-b").hidden = !on;
+      if (on) loadBodies(d, li);
+      syncMore();
     };
+  });
+  days.filter((d) => openDays.has(d)).forEach((d) =>
+    loadBodies(d, $(`#ledger li.day[data-day="${d}"]`)));
+  syncMore();
+}
+
+/* セッション本文は開いた日の分だけ取りにいく。一覧には1行目しか入っていない。 */
+async function loadBodies(day, li) {
+  if (!li || li.dataset.loaded) return;
+  const need = li.querySelectorAll("li.ses");
+  if (!need.length) { li.dataset.loaded = "1"; return; }
+  let map = sessionCache.get(day);
+  if (!map) {
+    try {
+      const r = await fetch(`data/sessions/${day}.json`);
+      if (!r.ok) throw new Error(r.status);
+      const j = await r.json();
+      map = new Map((j.items || []).map((x) => [x.ts, x.html]));
+      sessionCache.set(day, map);
+    } catch { return; }        // 取れなければ1行目のまま。次に開いたとき再試行する
+  }
+  li.dataset.loaded = "1";
+  need.forEach((el) => {
+    const html = map.get(el.dataset.ts);
+    if (html) el.querySelector(".ses-body").innerHTML = html;
   });
   syncMore();
 }
@@ -312,8 +379,15 @@ function renderLog() {
    line-clamp は overflow を作らないので scrollHeight では判定できず、
    パネルが非表示だと高さが全部0になるので、表示された後に測り直す。 */
 function syncMore() {
-  $("#ledger").querySelectorAll(".more").forEach((b) => {
+  $("#ledger").querySelectorAll("li.day.open .more").forEach((b) => {
     const body = b.previousElementSibling;
+    if (!b.onclick) {
+      b.onclick = () => {
+        const folded = body.classList.toggle("clamp");
+        body.dataset.open = folded ? "" : "1";
+        b.textContent = folded ? "続きを読む" : "閉じる";
+      };
+    }
     if (body.dataset.open === "1") { b.hidden = false; return; }
     const clamped = body.clientHeight;
     body.classList.remove("clamp");
@@ -323,14 +397,64 @@ function syncMore() {
   });
 }
 
-/* ---------------- 日報 ---------------- */
+/* ---------------- 日報 ----------------
+
+   日付ボタンを横一列に並べると、1年で250個になって流れていくだけになる。
+   月カレンダーなら日数が増えても画面の占有は一定で、目的の日を面で探せる。 */
 
 const reportCache = new Map();
+let calMonth = "";                     // 表示中の月 "YYYY-MM"
+
+function shiftMonth(ym, n) {
+  const [y, m] = ym.split("-").map(Number);
+  const d = new Date(y, m - 1 + n, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function renderCalendar() {
+  const rail = $("#daterail");
+  if (!DATA.reports.length) { rail.innerHTML = ""; return; }
+  if (!calMonth) calMonth = DATA.reports[0].slice(0, 7);
+
+  const have = new Set(DATA.reports);
+  const oldest = DATA.reports[DATA.reports.length - 1].slice(0, 7);
+  const newest = DATA.reports[0].slice(0, 7);
+  const [y, m] = calMonth.split("-").map(Number);
+  const first = new Date(y, m - 1, 1).getDay();
+  const days = new Date(y, m, 0).getDate();
+
+  const cells = [];
+  for (let i = 0; i < first; i++) cells.push(`<span class="cal-x"></span>`);
+  for (let d = 1; d <= days; d++) {
+    const iso = `${calMonth}-${String(d).padStart(2, "0")}`;
+    if (have.has(iso)) {
+      cells.push(`<button class="cal-d${iso === selectedReport ? " on" : ""}" data-date="${iso}">${d}</button>`);
+    } else {
+      cells.push(`<span class="cal-d off">${d}</span>`);
+    }
+  }
+
+  rail.innerHTML = `
+    <div class="cal-h">
+      <button class="cal-nav" type="button" data-go="-1"${calMonth <= oldest ? " disabled" : ""}>‹</button>
+      <span class="cal-m">${y}年${m}月</span>
+      <button class="cal-nav" type="button" data-go="1"${calMonth >= newest ? " disabled" : ""}>›</button>
+    </div>
+    <div class="cal-w">${WD.map((w) => `<span>${w}</span>`).join("")}</div>
+    <div class="cal-g">${cells.join("")}</div>`;
+
+  rail.querySelectorAll(".cal-nav").forEach((b) => {
+    b.onclick = () => { calMonth = shiftMonth(calMonth, Number(b.dataset.go)); renderCalendar(); };
+  });
+  rail.querySelectorAll("button.cal-d").forEach((b) => {
+    b.onclick = () => showReport(b.dataset.date);
+  });
+}
 
 async function showReport(date) {
   const body = $("#report-body");
   selectedReport = date;
-  [...document.querySelectorAll("#daterail button")].forEach((b) =>
+  [...document.querySelectorAll("#daterail button.cal-d")].forEach((b) =>
     b.classList.toggle("on", b.dataset.date === date));
   if (!date) { body.innerHTML = `<p class="empty">まだ日報がありません。最初の report セッションで書かれます。</p>`; return; }
   if (reportCache.has(date)) { body.innerHTML = reportCache.get(date); return; }
@@ -393,11 +517,11 @@ function render() {
   if (!live) $("#pulse").classList.add("stale");
   $("#stamp").textContent = `ledger ${DATA.generated_at}${live ? ` / prices ${PX.updated_at}` : ""}`;
 
-  const rail = $("#daterail");
-  rail.innerHTML = DATA.reports.map((d) => `<button data-date="${d}">${d.slice(5)}</button>`).join("");
-  rail.onclick = (e) => { const b = e.target.closest("button"); if (b) showReport(b.dataset.date); };
   // 更新のたびに最新へ飛ばされると読んでいた日報を見失うので、選択を保つ
-  showReport(DATA.reports.includes(selectedReport) ? selectedReport : DATA.reports[0]);
+  const keep = DATA.reports.includes(selectedReport) ? selectedReport : DATA.reports[0];
+  calMonth = (keep || DATA.reports[0] || "").slice(0, 7) || calMonth;
+  renderCalendar();
+  showReport(keep);
 
   renderLog();
 }
