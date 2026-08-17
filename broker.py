@@ -93,10 +93,48 @@ JP_UNIVERSE = [
     "9020.T", "9022.T", "9101.T", "8801.T", "9531.T",
 ]
 BENCH = {"us": "SPY", "jp": "1306.T"}   # 1306 = TOPIX連動ETF。比較用で売買はできない
+
+# ---- セクター ----
+# 上のコメントで分けている区分を、そのまま機械が読める形にしたもの。
+#
+# LLM の売買エージェントは「魅力的な銘柄について一貫した物語を作れるが、
+# 銘柄間の相関をポートフォリオ全体の露出に変換できない」と実証されている
+# （arXiv:2605.28850）。報告例では GOOGL と GOOG（相関0.994）に合計1.6の
+# 比重を割り当てようとし、リスク制約が0.11未満へ切り詰めていた。
+#
+# 1銘柄25%の上限は相関を見ない。メガキャップテック4銘柄で100%にすれば、
+# 分散しているように見えて実質1銘柄になる。ここを塞ぐ。
+SECTOR = {}
+for _sec, _ts in {
+    "tech":      ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "AVGO", "TSLA",
+                  "AMD", "NFLX", "ORCL", "CRM", "TXN", "DIS", "TMUS"],
+    "health":    ["LLY", "UNH", "JNJ", "ABBV", "MRK", "TMO", "ISRG"],
+    "consumer":  ["COST", "PG", "KO", "PEP", "WMT", "HD", "MCD", "NKE"],
+    "financial": ["JPM", "V", "BAC", "GS", "BLK", "SPGI"],
+    "industrial": ["CAT", "HON", "UNP", "GE"],
+    "resource":  ["XOM", "CVX", "LIN", "NEE", "AMT"],
+    "jp-auto":   ["7203.T", "7267.T", "6954.T"],
+    "jp-elec":   ["6758.T", "6501.T", "6981.T", "6702.T", "6503.T", "7751.T"],
+    "jp-semi":   ["6857.T", "6963.T", "6723.T", "6920.T"],
+    "jp-bank":   ["8306.T", "8316.T", "8411.T", "8766.T", "8750.T"],
+    "jp-trade":  ["8058.T", "8031.T", "8001.T", "9984.T"],
+    "jp-pharma": ["4568.T", "4502.T", "4519.T"],
+    "jp-material": ["4063.T", "4452.T", "4901.T", "5401.T"],
+    "jp-telecom": ["9433.T", "9432.T", "9434.T", "6098.T", "4661.T", "7974.T"],
+    "jp-retail": ["3382.T", "8267.T", "9843.T", "2914.T", "2802.T", "2502.T"],
+    "jp-infra":  ["9020.T", "9022.T", "9101.T", "8801.T", "9531.T"],
+}.items():
+    for _t in _ts:
+        SECTOR[_t] = _sec
+
+
+def sector_of(t: str) -> str:
+    return SECTOR.get(t.upper(), "other")
 LOT = {"us": 1, "jp": 100}              # 日本株は単元100株
 
 # ---- ガードレール ----
 MAX_POSITION_PCT = 0.25    # 1銘柄あたりブック総資産の25%まで
+MAX_SECTOR_PCT = 0.40      # 同一セクターは合計40%まで。相関の集中を塞ぐ（SECTOR 参照）
 MIN_CASH_PCT = 0.02        # 常に2%は現金
 MAX_BUYS_PER_DAY = 4       # ブックごとの1日の「買い」上限。売りは対象外
 COOLDOWN_HOURS = 20        # 同一銘柄を再度売買するまでの待ち時間
@@ -385,11 +423,31 @@ def fmt_book(s: dict, px: dict, b: str) -> str:
     out.append("保有:")
     if not bk["positions"]:
         out.append("  なし")
+    breached = []
     for t, p in sorted(bk["positions"].items()):
         q = px.get(t, p["avg_cost"])
         mv = p["shares"] * q
+        stop = p.get("stop")
+        tag = f"  撤退{c}{stop:,.1f}" if stop else "  撤退未設定"
+        if stop and q <= stop:
+            tag = f"  ★撤退線割れ {c}{stop:,.1f}"
+            breached.append(t)
         out.append(f"  {t:<8}{p['shares']:>6}株 @{c}{p['avg_cost']:,.1f} → {c}{q:,.1f}  "
-                   f"{c}{mv:,.0f} ({mv / eq * 100:4.1f}%)  {(q / p['avg_cost'] - 1) * 100:+.1f}%")
+                   f"{c}{mv:,.0f} ({mv / eq * 100:4.1f}%)  "
+                   f"{(q / p['avg_cost'] - 1) * 100:+.1f}%{tag}")
+    # 割り込んだ事実は毎回突きつける。売るかどうかは判断に委ねるが、
+    # 「決めた線を割ったのに持ち続けている」ことを黙って流させない。
+    if breached:
+        out.append(f"  ※ {', '.join(breached)} が撤退線を割っています。"
+                   "売るか、線を引き直す理由を journal に書くこと")
+
+    # セクターの集中も出す。1銘柄25%を守っていても同業4銘柄で実質1銘柄になりうる。
+    sec = {}
+    for t, p in bk["positions"].items():
+        sec[sector_of(t)] = sec.get(sector_of(t), 0) + p["shares"] * px.get(t, p["avg_cost"])
+    if sec:
+        out.append("セクター: " + " / ".join(
+            f"{k} {v / eq * 100:.1f}%" for k, v in sorted(sec.items(), key=lambda x: -x[1])))
     return "\n".join(out)
 
 
@@ -482,16 +540,34 @@ def cmd_screen(args) -> None:
         name = "米国株" if b == "us" else "日本株"
         print(f"=== {name}ブック {len(u)}銘柄を絞り込み ===")
 
-        df = daily(u, "5d")
-        moves = {}
+        # 52週ぶん取る。当日の値動きだけでなく、レンジ内の位置も見るため。
+        df = daily(u, "1y")
+        moves, lowband = {}, {}
         for t in u:
             if t not in df.columns:
                 continue
             col = df[t].dropna()
             if len(col) < 2:
                 continue
-            moves[t] = (float(col.iloc[-1]),
-                        (float(col.iloc[-1]) / float(col.iloc[-2]) - 1) * 100)
+            last = float(col.iloc[-1])
+            moves[t] = (last, (last / float(col.iloc[-2]) - 1) * 100)
+            if len(col) >= 60:
+                lo, hi = float(col.min()), float(col.max())
+                if hi > lo:
+                    lowband[t] = (last - lo) / (hi - lo) * 100
+
+        # 当日の値動きと決算だけを入口にすると、直近性バイアスを増幅する。
+        # Claude 系は特にこの傾向が強いと実証されている（arXiv:2605.28850）。
+        # そのうえ「今日動いた銘柄」しか見ないと、静かに安くなった銘柄には
+        # 永久にたどり着けない。値動き以外の入口を2つ足す。
+        #
+        #   レンジ下位   52週レンジの下から20%以内。動いていないから見えない銘柄
+        #   順番         ユニバースを日替わりで一巡させる。今日「見る番」の銘柄
+        #
+        # 順番の枠は、その日に何も起きていなくても必ず何銘柄かを検討対象に載せる。
+        # 「調べたうえで見送った」を積み上げるための入口で、買うための入口ではない。
+        turn = (now().date() - datetime.fromisoformat(s["start_date"]).date()).days
+        rota = {t for i, t in enumerate(sorted(u)) if i % 7 == turn % 7}
 
         eds = earnings_dates(u)
         hits = []
@@ -499,6 +575,11 @@ def cmd_screen(args) -> None:
             flags = []
             if abs(chg) >= args.move:
                 flags.append(f"値動き{chg:+.1f}%")
+            band = lowband.get(t)
+            if band is not None and band <= 20:
+                flags.append(f"52週レンジ下から{band:.0f}%")
+            if t in rota:
+                flags.append("順番")
             d = eds.get(t)
             if d is not None:
                 days = (d - today).days
@@ -508,18 +589,31 @@ def cmd_screen(args) -> None:
                     flags.append(f"決算{-days}日前に発表済")
             if t in held:
                 flags.append("保有中")
-            if flags:
-                hits.append((abs(chg), t, px, chg, flags))
+            if not flags:
+                continue
+            # 値動きの大きい順に切ると、静かな銘柄（レンジ下位・順番）が必ず
+            # 捨てられて入口を足した意味が消える。出来事の枠と定点観測の枠を
+            # 分けて、それぞれに表示数を確保する。
+            evt = any(f.startswith(("値動き", "決算")) or f == "保有中" for f in flags)
+            hits.append((0 if evt else 1, abs(chg), t, px, chg, flags))
 
         if not hits:
-            print(f"  条件に該当なし（値動き±{args.move}% / 決算が前後）\n")
+            print(f"  条件に該当なし（値動き±{args.move}% / 決算 / レンジ下位 / 順番）\n")
             continue
 
-        hits.sort(reverse=True)
-        for _, t, px, chg, flags in hits[:args.limit]:
-            print(f"  {t:<9}{cur(b)}{px:>11,.2f} {chg:+6.2f}%  {' / '.join(flags)}")
-        if len(hits) > args.limit:
-            print(f"  （該当 {len(hits)}件のうち値動きの大きい {args.limit}件を表示）")
+        def show(rows, head):
+            if not rows:
+                return
+            print(f"  --- {head} ---")
+            for _, _, t, px, chg, flags in rows:
+                print(f"  {t:<9}{cur(b)}{px:>11,.2f} {chg:+6.2f}%  {' / '.join(flags)}")
+
+        evts = sorted([h for h in hits if h[0] == 0], key=lambda h: -h[1])
+        quiet = sorted([h for h in hits if h[0] == 1], key=lambda h: -h[1])
+        show(evts[:args.limit], f"今日の出来事（該当{len(evts)}件）")
+        show(quiet[:3], f"定点観測（該当{len(quiet)}件）")
+        if len(evts) > args.limit:
+            print(f"  （出来事のうち値動きの大きい {args.limit}件を表示）")
         print()
 
 
@@ -632,17 +726,37 @@ def cmd_trade(args, side: str) -> None:
     raw, eq, c = px[t], equity(bk, px), cur(b)
 
     if side == "BUY":
+        # 撤退価格を必須にする。LLM の売買エージェントはディスポジション効果
+        # （小さな利益は早く確定し、損切りは実行しない）を示すことが実証されている。
+        # CLAUDE.md は「決めていたなら守れ」と書いていたが、どこにも記録が
+        # 無いので守りようがなかった。記録して status に突きつける。
+        # 売りは強制しない。判断を奪うと、この実験で見たいものが消える。
+        if args.stop is None or args.stop <= 0:
+            die("--stop（撤退価格）を指定すること。"
+                "ここを割ったら間違いだったと認める水準を数字で決める")
+        if args.stop >= raw:
+            die(f"--stop {args.stop:,.2f} が現在値 {raw:,.2f} 以上。撤退価格は下に置くこと")
         fill = raw * (1 + SLIPPAGE_BPS / 10_000)
         cost = fill * args.shares
         held = bk["positions"].get(t, {"shares": 0})["shares"]
         # 新規分はスリッページ込みの実際の支払額で評価する（約定直後の上限超えを防ぐ）
         if held * raw + cost > eq * MAX_POSITION_PCT:
             die(f"1銘柄上限{MAX_POSITION_PCT:.0%}({c}{eq * MAX_POSITION_PCT:,.0f})を超える")
+        # 1銘柄の上限だけでは相関の集中を止められない。同業4銘柄で100%にすれば
+        # 分散して見えて実質1銘柄になる。セクター合計にも上限を掛ける。
+        sec = sector_of(t)
+        held_sec = sum(p["shares"] * px.get(k, p["avg_cost"])
+                       for k, p in bk["positions"].items() if sector_of(k) == sec)
+        if held_sec + cost > eq * MAX_SECTOR_PCT:
+            die(f"セクター上限{MAX_SECTOR_PCT:.0%}を超える"
+                f"（{sec}: 保有{c}{held_sec:,.0f} + 今回{c}{cost:,.0f} "
+                f"> {c}{eq * MAX_SECTOR_PCT:,.0f}）")
         if bk["cash"] - cost < eq * MIN_CASH_PCT:
             die(f"現金不足（必要 {c}{cost:,.0f} / 使える {c}{bk['cash'] - eq * MIN_CASH_PCT:,.0f}）")
         p = bk["positions"].setdefault(t, {"shares": 0, "avg_cost": 0.0})
         p["avg_cost"] = (p["avg_cost"] * p["shares"] + fill * args.shares) / (p["shares"] + args.shares)
         p["shares"] += args.shares
+        p["stop"] = args.stop          # 買い増しでは新しい判断のほうを採る
         bk["cash"] -= cost
     else:
         p = bk["positions"].get(t)
@@ -779,6 +893,9 @@ if __name__ == "__main__":
         t = sub.add_parser(name)
         t.add_argument("ticker"); t.add_argument("shares", type=int)
         t.add_argument("--reason", required=True, help="判断理由。必須。")
+        # 売りには要らない。買うときだけ、撤退する水準を数字で置かせる。
+        t.add_argument("--stop", type=float, default=None,
+                       help="撤退価格。買いでは必須。ここを割ったら判断が誤りだったと認める水準。")
 
     j = sub.add_parser("journal")
     j.add_argument("--days", type=int, default=7)
