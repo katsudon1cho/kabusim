@@ -285,6 +285,9 @@ def bench_value(bk: dict, px: dict, b: str) -> float:
 
 CASH_RATE_TICKER = "^IRX"   # 13週財務省証券の利回り。待機資金の利回りに最も近い
 JPY_CASH_APY = 0.004        # 円は Yahoo に短期金利の系列が無いので固定の仮定値
+# 配当を毎回さかのぼって走査する日数。yfinance が権利落ち日の配当を反映するまで
+# 遅れることがあり、その日のうちに拾えないと以前の実装では永久に取りこぼした。
+DIV_LOOKBACK_DAYS = 20
 
 
 def cash_apy(s: dict, b: str):
@@ -354,7 +357,8 @@ def accrue(s: dict, px: dict) -> list:
         bk.setdefault("cash_interest", 0.0)
         bk.setdefault("dividends", 0.0)
         bk.setdefault("accrued_through", s["start_date"])
-        bk.setdefault("div_through", s["start_date"])
+        bk.setdefault("div_seen", [])
+        bk.pop("div_through", None)      # 日付の水位線は使わない（下の説明）
 
         days = (today - datetime.fromisoformat(bk["accrued_through"]).date()).days
         if days > 0:
@@ -367,36 +371,52 @@ def accrue(s: dict, px: dict) -> list:
                 if amt:
                     events.append((b, "利息", f"{days}日 @年{apy * 100:.2f}%", amt))
 
-        since = datetime.fromisoformat(bk["div_through"]).date()
-        if since < today:
-            ok = True
-            for t, p in list(bk["positions"].items()):
-                divs = _dividends_since(t, since)
-                if divs is None:
-                    ok = False
+        # 配当は「どの日まで処理したか」ではなく「どれを計上済みか」で管理する。
+        #
+        # 以前は div_through を today まで進めていたが、now() は JST なので
+        # JST の1日は ET の前日11:00〜当日11:00にあたる。米国株の権利落ち日 D の
+        # 配当を拾える窓は ET 11:00 に閉じ、yfinance の反映がそれより遅いと
+        # 未取得のまま水位線だけが D に進み、次回は d > D で探すので二度と拾えない。
+        # 実際 2026-08-14 の LLY $1.73 を取りこぼした（ET 09:53 時点で未反映）。
+        #
+        # 直近 DIV_LOOKBACK_DAYS 日を毎回走査し、記録に無いものだけを計上する。
+        # 遅れて反映されてもこの窓の内なら必ず拾え、記録があるので二重計上しない。
+        seen = set(bk["div_seen"])
+        floor = max(datetime.fromisoformat(s["start_date"]).date(),
+                    today - timedelta(days=DIV_LOOKBACK_DAYS))
+        probe = floor - timedelta(days=1)      # _dividends_since は d > since で返す
+
+        for t, p in list(bk["positions"].items()):
+            divs = _dividends_since(t, probe)
+            if divs is None:
+                continue                       # 取れなければ次回に回す
+            for d, per in divs:
+                key = f"{t}@{d.isoformat()}"
+                if key in seen:
                     continue
-                for d, per in divs:
-                    if d <= today:
-                        amt = p["shares"] * per
-                        bk["cash"] += amt
-                        bk["dividends"] += amt
-                        events.append((b, "配当", f"{t} {d} @{per:g}", amt))
-            # ベンチマークは配当を再投資する。SPY を買って持ち続けた場合と
-            # 同じ扱いにするため。現金で置くとこちら側が有利になりすぎる。
-            bt = BENCH[b]
-            if bk["bench_shares"] and bt in px:
-                divs = _dividends_since(bt, since)
-                if divs is None:
-                    ok = False
-                else:
-                    for d, per in divs:
-                        if d <= today:
-                            add = bk["bench_shares"] * per / px[bt]
-                            bk["bench_shares"] += add
-                            events.append((b, "ベンチ配当再投資",
-                                           f"{bt} {d} @{per:g}", 0.0))
-            if ok:
-                bk["div_through"] = today.isoformat()
+                amt = p["shares"] * per
+                bk["cash"] += amt
+                bk["dividends"] += amt
+                seen.add(key)
+                events.append((b, "配当", f"{t} {d} @{per:g}", amt))
+
+        # ベンチマークは配当を再投資する。SPY を買って持ち続けた場合と
+        # 同じ扱いにするため。現金で置くとこちら側が有利になりすぎる。
+        bt = BENCH[b]
+        if bk["bench_shares"] and bt in px:
+            divs = _dividends_since(bt, probe)
+            for d, per in (divs or []):
+                key = f"{bt}@{d.isoformat()}"
+                if key in seen:
+                    continue
+                add = bk["bench_shares"] * per / px[bt]
+                bk["bench_shares"] += add
+                seen.add(key)
+                events.append((b, "ベンチ配当再投資", f"{bt} {d} @{per:g}", 0.0))
+
+        # 記録は窓より古くなったものを捨てて、際限なく伸びないようにする
+        cut = (today - timedelta(days=DIV_LOOKBACK_DAYS * 3)).isoformat()
+        bk["div_seen"] = sorted(k for k in seen if k.split("@")[1] >= cut)
     return events
 
 
