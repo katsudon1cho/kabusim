@@ -3,7 +3,7 @@
   "books": {
     "us": {
       "start_equity": 50000.0,
-      "cash": 29163.763689654254,
+      "cash": 29166.722413270476,
       "positions": {
         "LLY": {
           "shares": 3,
@@ -34,16 +34,16 @@
         "2026-08-11": 1,
         "2026-08-12": 1
       },
-      "cash_interest": 47.15286590852524,
+      "cash_interest": 50.1115895247478,
       "dividends": 5.1899999999999995,
-      "accrued_through": "2026-08-20",
+      "accrued_through": "2026-08-21",
       "div_seen": [
         "LLY@2026-08-14"
       ]
     },
     "jp": {
       "start_equity": 20000000.0,
-      "cash": 17752897.72104968,
+      "cash": 17753092.273353472,
       "positions": {
         "6501.T": {
           "shares": 400,
@@ -57,14 +57,14 @@
       "buys_today": {
         "2026-08-10": 1
       },
-      "cash_interest": 2822.1210496836643,
+      "cash_interest": 3016.6733534759896,
       "dividends": 0.0,
-      "accrued_through": "2026-08-20",
+      "accrued_through": "2026-08-21",
       "div_seen": []
     }
   },
   "rates": {
-    "usd_apy": 0.03700000047683716,
-    "asof": "2026-08-20"
+    "usd_apy": 0.03702999830245972,
+    "asof": "2026-08-21"
   }
 }
