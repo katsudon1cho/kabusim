@@ -270,54 +270,26 @@ def bench_value(bk: dict, px: dict, b: str) -> float:
 
 
 # =========================================================
-# 現金の利息と配当
+# 配当
 #
-# どちらも当初は計上していなかったが、それぞれ別の向きに成績を歪めていた。
+# **現金の利息は計上しない。** 以前は計上していた。理由は「無利息にすると
+# 見送るという中心的な選択肢だけが不当に罰される」だったが、**実弾版の口座
+# （ウィブル）は預り金に利息を付けず、自動スイープも無効にしてある。**
+# 仮想版を実弾版の予行演習として使う以上、待機のコストは実弾版と揃える。
 #
-#   利息  現実の待機資金は短期金利ぶん増える。無利息にすると「見送る」という
-#         この運用の中心的な選択肢だけが不当に罰される。現金78%なら年3pt規模。
-#   配当  ベンチマーク側にだけ入れないと SPY が過小評価され、逆に保有側にだけ
-#         入れるとこちらが有利になりすぎる。必ず両方に入れること。
+# したがって**現金比率はそのままベンチマークとの差になる。**
+# これは買う理由にはならない。待つことの本当のコストは、条件を満たす設定が
+# 現れたときに入り損ねることであって、利回りではない。
 #
-# 二重計上を防ぐため、どちらも「どの日まで計上したか」を state に持つ。
-# 日付をキーにするので、1日に何度実行しても結果は変わらない。
+# 配当は残す。ベンチマーク側にだけ入れると SPY / 1306.T が過小評価され、
+# 逆に保有側にだけ入れるとこちらが有利になりすぎる。**必ず両方に入れること。**
+#
+# 二重計上を防ぐため「どれを計上済みか」を state に持つ。
 # =========================================================
 
-CASH_RATE_TICKER = "^IRX"   # 13週財務省証券の利回り。待機資金の利回りに最も近い
-JPY_CASH_APY = 0.004        # 円は Yahoo に短期金利の系列が無いので固定の仮定値
 # 配当を毎回さかのぼって走査する日数。yfinance が権利落ち日の配当を反映するまで
 # 遅れることがあり、その日のうちに拾えないと以前の実装では永久に取りこぼした。
 DIV_LOOKBACK_DAYS = 20
-
-
-def cash_apy(s: dict, b: str):
-    """現金の年利（小数）。米ドルは実測、円は仮定値。
-
-    取得に失敗したら前回値を使う。前回値も無ければ None を返し、
-    呼び出し側は計上を見送って次回にまとめて計上する。
-    無人で走るので、金利が取れないくらいで判断を止めてはいけない。
-    """
-    if b == "jp":
-        return JPY_CASH_APY
-    rates = s.setdefault("rates", {})
-    today = now().date().isoformat()
-    if rates.get("asof") == today and "usd_apy" in rates:
-        return rates["usd_apy"]
-    v = None
-    if not os.environ.get("BROKER_OFFLINE"):
-        try:
-            import yfinance as yf
-            df = yf.download(CASH_RATE_TICKER, period="5d",
-                             progress=False, auto_adjust=False)
-            c = df["Close"].ffill().iloc[-1]
-            v = float(c.item() if hasattr(c, "item") else c) / 100
-        except Exception:
-            v = None
-    # 桁を間違えた値（%のまま等）を弾く。0〜25%の外は異常とみなす
-    if v is not None and 0 <= v < 0.25:
-        rates["usd_apy"], rates["asof"] = v, today
-        return v
-    return rates.get("usd_apy")
 
 
 def _dividends_since(ticker: str, since):
@@ -354,22 +326,12 @@ def accrue(s: dict, px: dict) -> list:
     events = []
     for b in ("us", "jp"):
         bk = s["books"][b]
-        bk.setdefault("cash_interest", 0.0)
         bk.setdefault("dividends", 0.0)
-        bk.setdefault("accrued_through", s["start_date"])
         bk.setdefault("div_seen", [])
         bk.pop("div_through", None)      # 日付の水位線は使わない（下の説明）
-
-        days = (today - datetime.fromisoformat(bk["accrued_through"]).date()).days
-        if days > 0:
-            apy = cash_apy(s, b)
-            if apy is not None:
-                amt = bk["cash"] * apy / 365 * days
-                bk["cash"] += amt
-                bk["cash_interest"] += amt
-                bk["accrued_through"] = today.isoformat()
-                if amt:
-                    events.append((b, "利息", f"{days}日 @年{apy * 100:.2f}%", amt))
+        # 利息は計上しない。実弾版の口座が現金に利息を付けないため。
+        bk.pop("cash_interest", None)
+        bk.pop("accrued_through", None)
 
         # 配当は「どの日まで処理したか」ではなく「どれを計上済みか」で管理する。
         #
@@ -432,14 +394,9 @@ def fmt_book(s: dict, px: dict, b: str) -> str:
         f"現金 {c}{bk['cash']:,.0f} ({bk['cash'] / eq * 100:.1f}%)   "
         f"本日の買い {buys_today(bk)}/{MAX_BUYS_PER_DAY}件（売りは上限なし）",
     ]
-    # 利息は仮定（円）または実測（ドル）が混ざる数字なので、株価と区別して出す。
-    # 総資産のうちどれだけが判断以外から来ているかが見えないと成績を読み違える。
-    apy = s.get("rates", {}).get("usd_apy") if b == "us" else JPY_CASH_APY
-    src = "実測 ^IRX" if b == "us" else "仮定"
-    out.append(
-        f"受取利息 {c}{bk.get('cash_interest', 0):,.0f} / "
-        f"受取配当 {c}{bk.get('dividends', 0):,.0f}   "
-        + (f"現金金利 年{apy * 100:.2f}%（{src}）" if apy else "現金金利 未取得"))
+    # **現金の利息は無い。** 待っている間、現金は増えも減りもしない。
+    # 配当は判断の成果ではないので、株価の損益と区別して出す。
+    out.append(f"受取配当 {c}{bk.get('dividends', 0):,.0f}")
     out.append("保有:")
     if not bk["positions"]:
         out.append("  なし")
@@ -544,6 +501,39 @@ def cmd_history(args) -> None:
             print(f"{t:<9}取得失敗")
 
 
+# **当日の値動きのしきい値は銘柄ごとに変える。** 固定の±3%は両方向に壊れる。
+# 普段から3%動く銘柄は毎日「出来事」になって枠を食い潰し、逆に普段0.5%しか
+# 動かない銘柄は1.8%（平常の3.6倍）動いても入口に立てない。
+# 実弾版で ORCL が前者、LIN と TMUS が後者だった。
+# その銘柄の平常の値動きの MOVE_K 倍を基準にする。
+MOVE_K = 2.5            # 平常の何倍なら「出来事」とみなすか
+MOVE_FLOOR_PCT = 1.5    # 静かな銘柄でも、これ未満は出来事にしない
+MOVE_CEIL_PCT = 8.0     # 荒い銘柄でも、これを超える日は必ず出来事にする
+VOL_DAYS = 10           # 平常を測る営業日数
+
+
+def typical_move(closes, days: int = VOL_DAYS):
+    """終値の列から「その銘柄にとって普通の1日の値動き」を返す（%）。無理なら None。
+
+    **平均ではなく絶対値の中央値を使う。** 平均だと決算の1日で跳ね上がり、
+    その銘柄の「平常」が決算の日になってしまう。
+    """
+    tail = [float(x) for x in closes[-(days + 1):]]
+    mv = [abs(b - a) / a * 100 for a, b in zip(tail, tail[1:]) if a]
+    if len(mv) < 3:
+        return None
+    mv.sort()
+    n = len(mv)
+    return mv[n // 2] if n % 2 else (mv[n // 2 - 1] + mv[n // 2]) / 2
+
+
+def move_threshold(typical, fallback: float):
+    """その銘柄で「今日は出来事だ」とみなす値動きの大きさ（%）。"""
+    if typical is None:
+        return fallback
+    return max(MOVE_FLOOR_PCT, min(MOVE_CEIL_PCT, MOVE_K * typical))
+
+
 def cmd_screen(args) -> None:
     """手順4の条件に当てはまる銘柄だけを絞り込む。
 
@@ -562,7 +552,7 @@ def cmd_screen(args) -> None:
 
         # 52週ぶん取る。当日の値動きだけでなく、レンジ内の位置も見るため。
         df = daily(u, "1y")
-        moves, lowband = {}, {}
+        moves, lowband, typical = {}, {}, {}
         for t in u:
             if t not in df.columns:
                 continue
@@ -571,6 +561,8 @@ def cmd_screen(args) -> None:
                 continue
             last = float(col.iloc[-1])
             moves[t] = (last, (last / float(col.iloc[-2]) - 1) * 100)
+            # 日足はもう手元にあるので、平常の値動きは追加取得なしで出せる。
+            typical[t] = typical_move(list(col.values))
             if len(col) >= 60:
                 lo, hi = float(col.min()), float(col.max())
                 if hi > lo:
@@ -593,8 +585,10 @@ def cmd_screen(args) -> None:
         hits = []
         for t, (px, chg) in moves.items():
             flags = []
-            if abs(chg) >= args.move:
-                flags.append(f"値動き{chg:+.1f}%")
+            typ = typical.get(t)
+            if abs(chg) >= move_threshold(typ, args.move):
+                note = f"（平常{typ:.1f}%）" if typ is not None else ""
+                flags.append(f"値動き{chg:+.1f}%{note}")
             band = lowband.get(t)
             if band is not None and band <= 20:
                 flags.append(f"52週レンジ下から{band:.0f}%")
@@ -618,7 +612,7 @@ def cmd_screen(args) -> None:
             hits.append((0 if evt else 1, abs(chg), t, px, chg, flags))
 
         if not hits:
-            print(f"  条件に該当なし（値動き±{args.move}% / 決算 / レンジ下位 / 順番）\n")
+            print("  条件に該当なし（値動きが平常より大きい / 決算 / レンジ下位 / 順番）" + chr(10))
             continue
 
         def show(rows, head):
@@ -906,7 +900,8 @@ if __name__ == "__main__":
 
     sc = sub.add_parser("screen")
     sc.add_argument("--book", choices=["us", "jp"])
-    sc.add_argument("--move", type=float, default=3.0, help="値動きのしきい値（%）")
+    sc.add_argument("--move", type=float, default=3.0,
+                    help="平常の値動きが測れないときの固定しきい値（%）")
     sc.add_argument("--limit", type=int, default=8, help="表示する最大件数")
 
     for name in ("buy", "sell"):

@@ -135,13 +135,9 @@ def main() -> int:
             "ret_pct": round((eq / bk["start_equity"] - 1) * 100, 3),
             "bench_pct": round((bm / bk["start_equity"] - 1) * 100, 3),
             "diff_pt": round((eq / bm - 1) * 100, 3) if bm else 0.0,
-            # 利息と配当は判断の成果ではないので、総資産とは別に出す。
-            # 特に利息は仮定（円）と実測（ドル）が混ざるため、利率も添える。
-            "cash_interest": round(bk.get("cash_interest", 0.0), 2),
+            # 配当は判断の成果ではないので、総資産とは別に出す。
+            # 現金の利息は計上していない（実弾版の口座が付けないため）。
             "dividends": round(bk.get("dividends", 0.0), 2),
-            "cash_apy": (state.get("rates", {}).get("usd_apy")
-                         if b == "us" else broker.JPY_CASH_APY),
-            "cash_apy_src": "実測 ^IRX" if b == "us" else "仮定",
             "positions": [
                 {
                     "ticker": t,
