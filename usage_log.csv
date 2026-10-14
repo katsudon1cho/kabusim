@@ -251,3 +251,4 @@ ts,session,ok,turns,duration_s,input_tokens,cache_create,cache_read,output_token
 2026-10-14T04:53:43+09:00,us-close,ok,25,484.4,36,58397,802021,24033,1.7005,claude-haiku-5-5|claude-opus-5
 2026-10-14T06:53:11+09:00,report,ok,28,445.1,56,96012,1780049,30293,2.6077,claude-opus-5
 2026-10-14T09:54:38+09:00,jp-open,ok,32,543.2,44,69768,1165265,24981,2.0272,claude-haiku-5-5|claude-opus-5
+2026-10-14T14:58:37+09:00,jp-close,ok,57,777.5,84,101592,2648543,44272,3.5967,claude-haiku-5-5|claude-opus-5
